@@ -1,0 +1,779 @@
+/**
+ * ChatScreen - Main MOTTO Interface
+ * Features: Multi-language chat, voice input, personalization, source citations
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Modal,
+  Animated,
+  Alert,
+} from 'react-native';
+import MasterAIService from '../services/core/MasterAIService';
+import MultilingualService from '../services/core/MultilingualService';
+import ContextMemoryService from '../services/core/ContextMemoryService';
+import VoiceIntegrationService from '../services/core/VoiceIntegrationService';
+import { useMultilingual } from '../hooks/useMultilingual';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { FriendlyErrorMessages } from '../utils/errorMessages';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+  sources?: string[];
+  confidence?: number;
+  language?: string;
+  responseTime?: number;
+}
+
+const ChatScreen: React.FC = () => {
+  // Generate a consistent userId for this session
+  const userId = React.useMemo(() => 'user_' + Date.now(), []);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState('');
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const {
+    languageProfile,
+    supportedLanguages,
+    setUserLanguage
+  } = useMultilingual(userId);
+
+  // Pulse animation for loading
+  useEffect(() => {
+    if (isLoading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isLoading]);
+
+  // Auto-scroll to bottom when new message
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
+
+  // Send message
+  const handleSend = async () => {
+    if (!inputText.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: inputText.trim(),
+      timestamp: Date.now(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
+    setError(null);
+
+    const startTime = Date.now();
+
+    try {
+      // Add to context memory
+      await ContextMemoryService.addMessage(userId, 'user', userMessage.content);
+
+      // Get conversation context
+      const contextData = await ContextMemoryService.getContext(userId, userMessage.content);
+      
+      // Get full response with metadata and context
+      const response = await MasterAIService.masterChat(
+        userId,
+        userMessage.content,
+        {
+          conversationLength: messages.length,
+          isFollowUp: messages.length > 1,
+          recentContext: contextData.relevantContext,
+          currentTopics: contextData.currentTopics,
+        }
+      );
+
+      const responseTime = Date.now() - startTime;
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.text,
+        timestamp: Date.now(),
+        sources: response.sources,
+        confidence: response.confidence,
+        responseTime,
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Add assistant response to context memory
+      await ContextMemoryService.addMessage(userId, 'assistant', assistantMessage.content);
+
+    } catch (err) {
+      console.error('Chat error:', err);
+      
+      // Use friendly error message
+      const friendlyError = FriendlyErrorMessages.getFriendlyMessage(err, 'chat');
+      setError(friendlyError);
+
+      // Add friendly error message to chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: friendlyError,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      setLoadingPhase('');
+    }
+  };
+
+  // Voice input (Real implementation!)
+  const handleVoiceInput = async () => {
+    const voiceAvailable = VoiceIntegrationService.isAvailable();
+    
+    if (!voiceAvailable.speechToText) {
+      Alert.alert(
+        'Voice Not Available',
+        FriendlyErrorMessages.getFriendlyMessage('Voice not installed', 'voice'),
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    setIsListening(true);
+    try {
+      await VoiceIntegrationService.startListening(
+        (transcribedText) => {
+          // Text recognized!
+          setInputText(transcribedText);
+          setIsListening(false);
+          console.log('[Voice] Transcribed:', transcribedText);
+        },
+        (error) => {
+          // Error occurred
+          console.error('[Voice] Error:', error);
+          setError('Voice input failed. Please try typing instead.');
+          setIsListening(false);
+        },
+        languageProfile?.primaryLanguage || 'en-US'
+      );
+    } catch (err) {
+      console.error('Voice error:', err);
+      const friendlyError = FriendlyErrorMessages.getFriendlyMessage(err, 'voice');
+      setError(friendlyError);
+      setIsListening(false);
+    }
+  };
+
+  // Change language
+  const handleLanguageChange = async (langCode: string) => {
+    try {
+      await setUserLanguage(langCode);
+      setShowLanguageModal(false);
+      
+      // Add system message
+      const langName = supportedLanguages.find(l => l.code === langCode)?.name;
+      const systemMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Language changed to ${langName}! I'll now respond in ${langName}. 🌍`,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, systemMessage]);
+    } catch (err) {
+      console.error('Language change error:', err);
+    }
+  };
+
+  // Welcome message (better, shorter alternative)
+  useEffect(() => {
+    if (messages.length === 0) {
+      const hour = new Date().getHours();
+      let greeting = 'Hey there!';
+      
+      if (hour >= 5 && hour < 12) greeting = 'Good morning!';
+      else if (hour >= 12 && hour < 17) greeting = 'Good afternoon!';
+      else if (hour >= 17 && hour < 22) greeting = 'Good evening!';
+
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        content: `${greeting} 👋
+
+I'm MOTTO - ready to help with anything! Ask me questions, get advice, learn new things... I'm here for you.
+
+What's on your mind?`,
+        timestamp: Date.now(),
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, []);
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <Text style={styles.logo}>💭</Text>
+          </Animated.View>
+          <View>
+            <Text style={styles.headerTitle}>MOTTO</Text>
+            <Text style={styles.headerSubtitle}>
+              {languageProfile?.primaryLanguage 
+                ? supportedLanguages.find(l => l.code === languageProfile.primaryLanguage)?.name
+                : 'English'}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setShowLanguageModal(true)}
+          >
+            <Text style={styles.iconButtonText}>🌍</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Error Banner */}
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>⚠️ {error}</Text>
+          <TouchableOpacity onPress={() => setError(null)}>
+            <Text style={styles.errorClose}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Messages */}
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messagesContainer}
+        contentContainerStyle={styles.messagesContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {messages.map((message) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            isUser={message.role === 'user'}
+          />
+        ))}
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <LoadingSpinner 
+              variant="thinking" 
+              color="#4F46E5"
+              message={loadingPhase || FriendlyErrorMessages.getLoadingMessage('chat')}
+            />
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Input Area */}
+      <View style={styles.inputContainer}>
+        <View style={styles.inputWrapper}>
+          <TouchableOpacity
+            style={[styles.voiceButton, isListening && styles.voiceButtonActive]}
+            onPress={handleVoiceInput}
+            disabled={isLoading}
+          >
+            <Text style={styles.voiceButtonText}>
+              {isListening ? '🔴' : '🎤'}
+            </Text>
+          </TouchableOpacity>
+
+          <TextInput
+            ref={inputRef}
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type or speak..."
+            placeholderTextColor="#999"
+            multiline
+            maxLength={1000}
+            editable={!isLoading}
+            onSubmitEditing={handleSend}
+          />
+          
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              (!inputText.trim() || isLoading) && styles.sendButtonDisabled
+            ]}
+            onPress={handleSend}
+            disabled={!inputText.trim() || isLoading}
+          >
+            <Text style={styles.sendButtonText}>
+              {isLoading ? '⏳' : '🚀'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <Text style={styles.quickActionsHint}>
+            💬 Type, tap 🎤 to speak, or tap 🌍 for language
+          </Text>
+        </View>
+      </View>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Language 🌍</Text>
+              <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.languageList}>
+              {supportedLanguages.slice(0, 20).map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[
+                    styles.languageItem,
+                    languageProfile?.primaryLanguage === lang.code && styles.languageItemActive
+                  ]}
+                  onPress={() => handleLanguageChange(lang.code)}
+                >
+                  <Text style={styles.languageName}>{lang.name}</Text>
+                  {languageProfile?.primaryLanguage === lang.code && (
+                    <Text style={styles.languageCheck}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={styles.languageNote}>
+              And 80+ more languages available!
+            </Text>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+};
+
+// Message Bubble Component
+const MessageBubble: React.FC<{ message: Message; isUser: boolean }> = ({
+  message,
+  isUser,
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <View style={[styles.messageBubbleContainer, isUser && styles.messageBubbleContainerUser]}>
+      <TouchableOpacity
+        style={[
+          styles.messageBubble,
+          isUser ? styles.messageBubbleUser : styles.messageBubbleAssistant
+        ]}
+        onLongPress={() => setShowDetails(!showDetails)}
+        activeOpacity={0.8}
+      >
+        <Text style={[
+          styles.messageText,
+          isUser && styles.messageTextUser
+        ]}>
+          {message.content}
+        </Text>
+
+        {/* Metadata */}
+        {!isUser && (showDetails || message.sources) && (
+          <View style={styles.messageMetadata}>
+            {message.sources && message.sources.length > 0 && (
+              <View style={styles.sources}>
+                <Text style={styles.sourcesLabel}>📚 Sources:</Text>
+                <Text style={styles.sourcesText}>
+                  {message.sources.slice(0, 3).join(', ')}
+                  {message.sources.length > 3 && ` +${message.sources.length - 3} more`}
+                </Text>
+              </View>
+            )}
+
+            {showDetails && (
+              <>
+                {message.confidence !== undefined && (
+                  <Text style={styles.metadataItem}>
+                    🎯 Confidence: {message.confidence}%
+                  </Text>
+                )}
+                {message.responseTime && (
+                  <Text style={styles.metadataItem}>
+                    ⚡ Response time: {(message.responseTime / 1000).toFixed(1)}s
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
+        )}
+
+        {/* Timestamp */}
+        <Text style={[
+          styles.timestamp,
+          isUser && styles.timestampUser
+        ]}>
+          {new Date(message.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: Platform.OS === 'ios' ? 50 : 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconButtonText: {
+    fontSize: 20,
+  },
+
+  // Error Banner
+  errorBanner: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#991B1B',
+    fontSize: 14,
+    flex: 1,
+  },
+  errorClose: {
+    color: '#991B1B',
+    fontSize: 18,
+    fontWeight: 'bold',
+    padding: 4,
+  },
+
+  // Messages
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  messageBubbleContainer: {
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  messageBubbleContainerUser: {
+    alignItems: 'flex-end',
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  messageBubbleAssistant: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 4,
+  },
+  messageBubbleUser: {
+    backgroundColor: '#007AFF',
+    borderBottomRightRadius: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#1F2937',
+  },
+  messageTextUser: {
+    color: '#FFFFFF',
+  },
+  timestamp: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  timestampUser: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+
+  // Metadata
+  messageMetadata: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  sources: {
+    marginBottom: 4,
+  },
+  sourcesLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  sourcesText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  metadataItem: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+
+  // Loading
+  loadingContainer: {
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  loadingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
+    padding: 12,
+    gap: 8,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
+  },
+
+  // Input
+  inputContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  voiceButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  voiceButtonActive: {
+    backgroundColor: '#FEE2E2',
+  },
+  voiceButtonText: {
+    fontSize: 20,
+  },
+  input: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 100,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  sendButtonText: {
+    fontSize: 20,
+  },
+  quickActions: {
+    marginTop: 8,
+  },
+  quickActionsHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+
+  // Language Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#6B7280',
+    padding: 4,
+  },
+  languageList: {
+    maxHeight: 400,
+  },
+  languageItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  languageItemActive: {
+    backgroundColor: '#EFF6FF',
+  },
+  languageName: {
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  languageCheck: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  languageNote: {
+    textAlign: 'center',
+    padding: 16,
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
+  },
+});
+
+export default ChatScreen;

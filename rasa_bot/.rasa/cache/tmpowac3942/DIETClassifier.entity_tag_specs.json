@@ -1,0 +1,52 @@
+[
+  {
+    "tag_name": "entity",
+    "ids_to_tags": {
+      "1": "B-app_name",
+      "2": "I-app_name",
+      "3": "L-app_name",
+      "4": "U-app_name",
+      "5": "B-language",
+      "6": "I-language",
+      "7": "L-language",
+      "8": "U-language",
+      "9": "B-name",
+      "10": "I-name",
+      "11": "L-name",
+      "12": "U-name",
+      "13": "B-text",
+      "14": "I-text",
+      "15": "L-text",
+      "16": "U-text",
+      "17": "B-time",
+      "18": "I-time",
+      "19": "L-time",
+      "20": "U-time",
+      "0": "O"
+    },
+    "tags_to_ids": {
+      "B-app_name": 1,
+      "I-app_name": 2,
+      "L-app_name": 3,
+      "U-app_name": 4,
+      "B-language": 5,
+      "I-language": 6,
+      "L-language": 7,
+      "U-language": 8,
+      "B-name": 9,
+      "I-name": 10,
+      "L-name": 11,
+      "U-name": 12,
+      "B-text": 13,
+      "I-text": 14,
+      "L-text": 15,
+      "U-text": 16,
+      "B-time": 17,
+      "I-time": 18,
+      "L-time": 19,
+      "U-time": 20,
+      "O": 0
+    },
+    "num_tags": 21
+  }
+]

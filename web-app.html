@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISIONMOTTO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .description {
+            font-size: 16px;
+            color: #34495e;
+            text-align: center;
+            line-height: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            margin: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            min-width: 200px;
+        }
+        
+        .button:hover {
+            background-color: #2980b9;
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .back-button {
+            background-color: #95a5a6;
+            margin-bottom: 20px;
+        }
+        
+        .back-button:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .status {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">✅ VISIONMOTTO Web Version - Working!</div>
+        
+        <!-- Home Screen -->
+        <div id="home" class="screen active">
+            <h1 class="title">VISIONMOTTO</h1>
+            <p class="subtitle">Welcome to your vision app!</p>
+            
+            <button class="button" onclick="showScreen('about')">About</button>
+            <button class="button" onclick="showScreen('settings')">Settings</button>
+        </div>
+        
+        <!-- About Screen -->
+        <div id="about" class="screen">
+            <button class="button back-button" onclick="showScreen('home')">← Back</button>
+            <h1 class="title">About VISIONMOTTO</h1>
+            <p class="subtitle">Your vision companion app</p>
+            <p class="description">
+                VISIONMOTTO helps you achieve your goals and track your progress.
+                This web version demonstrates the core functionality while the iOS app is building.
+            </p>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settings" class="screen">
+            <button class="button back-button" onclick="showScreen('home')">← Back</button>
+            <h1 class="title">Settings</h1>
+            <p class="subtitle">Configure your app</p>
+            <p class="description">
+                Customize your VISIONMOTTO experience here.
+                The iOS version will have full native functionality.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show the selected screen
+            document.getElementById(screenId).classList.add('active');
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,98 @@
+version: "3.1"
+stories:
+  - story: greet and ask help
+    steps:
+      - user: |
+          hello
+        intent: greet
+      - action: utter_greet
+      - user: |
+          I need help
+        intent: ask_help
+      - action: utter_ask_help
+
+  - story: set a reminder
+    steps:
+      - user: |
+          remind me to call mom at 5pm
+        intent: set_reminder
+        entities:
+          - text: call mom
+          - time: 5pm
+      - action: action_set_reminder
+      - action: utter_reminder_set
+
+  - story: translate text
+    steps:
+      - user: |
+          translate hello world to Spanish
+        intent: translate_text
+        entities:
+          - text: hello world
+          - language: Spanish
+      - action: action_translate_text
+      - action: utter_translation 
+  - story: error handling for unknown app
+    steps:
+      - user: |
+          open UnknownApp
+        intent: open_app
+        entities:
+          - app_name: UnknownApp
+      - action: action_open_app
+      - action: utter_error_app_not_found
+      - user: |
+          open Safari
+        intent: open_app
+        entities:
+          - app_name: Safari
+      - action: action_open_app
+      - action: utter_app_opened
+
+  - story: compound command with form and recovery
+    steps:
+      - user: |
+          open Safari and search for weather in Paris
+        intent: compound_command
+        entities:
+          - app_name: Safari
+          - text: weather in Paris
+      - action: compound_command_form
+      - active_loop: compound_command_form
+      - user: |
+          open new tab
+        intent: inform
+        entities:
+          - action: open new tab
+      - user: |
+          weather in Paris
+        intent: inform
+        entities:
+          - text: weather in Paris
+      - action: action_open_safari_new_tab
+      - action: utter_app_action_completed
+      - active_loop: null
+
+  - story: bot activation and deactivation
+    steps:
+      - user: |
+          activate the bot
+        intent: activate_bot
+      - action: action_toggle_bot
+      - action: utter_bot_activated
+      - user: |
+          deactivate the bot
+        intent: deactivate_bot
+      - action: action_toggle_bot
+      - action: utter_bot_deactivated
+
+  - story: recovery from misunderstood input
+    steps:
+      - user: |
+          blargh blargh
+        intent: out_of_scope
+      - action: utter_default
+      - user: |
+          hello
+        intent: greet
+      - action: utter_greet 

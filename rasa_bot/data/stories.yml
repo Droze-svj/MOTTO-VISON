@@ -1,0 +1,118 @@
+version: "3.1"
+
+stories:
+  - story: open app flow
+    steps:
+      - intent: open_app
+      - action: action_open_app
+      - action: utter_app_opened
+
+  - story: close app flow
+    steps:
+      - intent: close_app
+      - action: action_close_app
+      - action: utter_app_closed
+
+  - story: app action flow
+    steps:
+      - intent: app_action
+      - action: action_perform_app_action
+      - action: utter_app_action_completed
+
+  - story: list apps flow
+    steps:
+      - intent: list_apps
+      - action: action_list_available_apps
+      - action: utter_list_apps
+
+  - story: control app flow
+    steps:
+      - intent: control_app
+      - action: utter_ask_app_action
+      - intent: app_action
+      - action: action_perform_app_action
+      - action: utter_app_action_completed
+
+  - story: open safari new tab flow
+    steps:
+      - intent: open_safari_new_tab
+      - action: action_open_safari_new_tab
+
+  - story: refresh chrome flow
+    steps:
+      - intent: refresh_chrome
+      - action: action_refresh_chrome
+
+  - story: create note flow
+    steps:
+      - intent: create_note
+      - action: action_create_note
+
+  - story: create mail flow
+    steps:
+      - intent: create_mail
+      - action: action_create_mail
+
+  - story: bot activation flow
+    steps:
+      - intent: activate_bot
+      - action: action_toggle_bot
+      - action: utter_bot_activated
+
+  - story: bot deactivation flow
+    steps:
+      - intent: deactivate_bot
+      - action: action_toggle_bot
+      - action: utter_bot_deactivated
+
+  - story: greet path
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - story: affirm path
+    steps:
+      - intent: affirm
+      - action: utter_affirm
+
+  - story: compound command flow
+    steps:
+      - intent: compound_command
+      - action: compound_command_form
+      - active_loop: compound_command_form
+      - intent: inform
+        entities:
+          - app_name: "Safari"
+      - intent: inform
+        entities:
+          - action: "open new tab"
+      - intent: inform
+        entities:
+          - text: "weather in Paris"
+      - action: action_open_safari_new_tab
+      - action: utter_app_action_completed
+      - active_loop: null
+
+  - story: compound command error recovery
+    steps:
+      - intent: compound_command
+      - action: compound_command_form
+      - active_loop: compound_command_form
+      - intent: inform
+        entities:
+          - app_name: "UnknownApp"
+      - action: utter_error_step
+      - intent: deny
+      - action: utter_error_command
+      - intent: inform
+        entities:
+          - app_name: "Safari"
+      - intent: inform
+        entities:
+          - action: "open new tab"
+      - intent: inform
+        entities:
+          - text: "weather in Paris"
+      - action: action_open_safari_new_tab
+      - action: utter_app_action_completed
+      - active_loop: null

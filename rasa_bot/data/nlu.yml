@@ -1,0 +1,416 @@
+version: "3.1"
+
+nlu:
+  - intent: greet
+    examples: |
+      - hey
+      - hello
+      - hi
+      - hello there
+      - good morning
+      - good evening
+      - hey there
+      - let's go
+      - hey dude
+      - goodmorning
+      - goodevening
+      - good afternoon
+
+  - intent: goodbye
+    examples: |
+      - cu
+      - good by
+      - cee you later
+      - good night
+      - bye
+      - goodbye
+      - see you around
+      - bye bye
+      - see you later
+      - see you soon
+      - talk to you later
+
+  - intent: ask_help
+    examples: |
+      - help
+      - I need help
+      - can you help me
+      - what can you do
+      - how does this work
+      - what are your features
+      - show me what you can do
+      - I need assistance
+      - help me out
+      - what are you capable of
+      - how can you help me
+
+  - intent: ask_mood
+    examples: |
+      - how are you
+      - how do you feel
+      - are you happy
+      - how's your day
+      - how are you doing
+      - how's it going
+      - how are you feeling
+      - what's your mood
+      - are you feeling good
+      - how's your mood today
+
+  - intent: inform_mood
+    examples: |
+      - I am happy
+      - I feel great
+      - I'm doing well
+      - I'm feeling good
+      - I'm happy
+      - I'm excited
+      - I'm sad
+      - I'm tired
+      - I'm not feeling well
+      - I'm okay
+
+  - intent: provide_name
+    examples: |
+      - my name is [John](name)
+      - I am [Sarah](name)
+      - call me [Mike](name)
+      - I'm [David](name)
+      - [Emma](name) is my name
+      - you can call me [Alex](name)
+      - [James](name)
+      - [Lisa](name)
+      - [Tom](name)
+      - [Anna](name)
+
+  - intent: provide_preference
+    examples: |
+      - I prefer [English](language)
+      - I like [Spanish](language)
+      - I want to use [French](language)
+      - [German](language) please
+      - I'd like to use [Italian](language)
+      - switch to [Japanese](language)
+      - change to [Chinese](language)
+      - I want [Russian](language)
+      - [Portuguese](language) would be better
+      - I prefer [Dutch](language)
+
+  - intent: set_reminder
+    examples: |
+      - remind me to [call mom](text) at [5pm](time)
+      - set a reminder for [meeting](text) at [2pm](time)
+      - remind me about [doctor appointment](text) tomorrow
+      - create a reminder for [birthday party](text)
+      - set reminder for [team meeting](text)
+      - remind me to [buy groceries](text)
+      - create a reminder for [dentist](text)
+      - set a reminder for [project deadline](text)
+      - remind me to [pay bills](text)
+      - create reminder for [gym](text)
+
+  - intent: translate_text
+    examples: |
+      - translate [hello world](text) to [Spanish](language)
+      - how do you say [good morning](text) in [French](language)
+      - translate this: [thank you](text)
+      - what is [hello](text) in [German](language)
+      - translate [goodbye](text) to [Italian](language)
+      - how to say [welcome](text) in [Japanese](language)
+      - translate [good night](text) to [Chinese](language)
+      - what's [thank you](text) in [Russian](language)
+      - translate [hello](text) to [Portuguese](language)
+      - how do you say [goodbye](text) in [Dutch](language)
+
+  - intent: ask_translation
+    examples: |
+      - can you translate this
+      - I need a translation
+      - help me translate
+      - translate this for me
+      - what's the translation
+      - how do you say this
+      - can you help me translate
+      - I want to translate something
+      - need translation help
+      - what's the meaning in another language
+
+  - intent: provide_text
+    examples: |
+      - here's the text: [hello world](text)
+      - I want to translate [good morning](text)
+      - the text is [thank you](text)
+      - translate [welcome](text)
+      - I need to translate [goodbye](text)
+      - the phrase is [good night](text)
+      - translate [hello](text)
+      - I want to know how to say [thank you](text)
+      - the text to translate is [welcome](text)
+      - [goodbye](text) is what I want to translate
+
+  - intent: change_language
+    examples: |
+      - change language to [Spanish](language)
+      - switch to [French](language)
+      - I want to use [German](language)
+      - change to [Italian](language)
+      - set language to [Japanese](language)
+      - use [Chinese](language)
+      - switch language to [Russian](language)
+      - change to [Portuguese](language)
+      - set to [Dutch](language)
+      - I prefer [English](language)
+
+  - intent: ask_supported_languages
+    examples: |
+      - what languages do you support
+      - which languages can you translate
+      - show me supported languages
+      - what languages are available
+      - list supported languages
+      - what languages can you handle
+      - which languages do you know
+      - show available languages
+      - what languages can I use
+      - tell me about supported languages
+
+  - intent: ask_translation_history
+    examples: |
+      - show my translation history
+      - what have I translated before
+      - show past translations
+      - view translation history
+      - see my translation history
+      - show previous translations
+      - what did I translate earlier
+      - display translation history
+      - show me my translations
+      - view my translation records
+
+  - intent: ask_translation_stats
+    examples: |
+      - show translation statistics
+      - what are my translation stats
+      - show translation usage
+      - display translation stats
+      - view translation statistics
+      - show my translation stats
+      - what are my translation metrics
+      - display translation usage
+      - show translation analytics
+      - view translation metrics
+
+  - intent: ask_schedule
+    examples: |
+      - what's my schedule
+      - show my schedule
+      - what's on my calendar
+      - display my schedule
+      - show today's schedule
+      - what's planned for today
+      - show my appointments
+      - what's my agenda
+      - display my calendar
+      - show my planned activities
+
+  - intent: ask_productivity_tip
+    examples: |
+      - give me a productivity tip
+      - I need productivity advice
+      - share a productivity tip
+      - how can I be more productive
+      - give me a tip to be more productive
+      - share productivity advice
+      - I want to be more productive
+      - help me be more productive
+      - give me productivity tips
+      - share some productivity tips
+
+  - intent: ask_personalization
+    examples: |
+      - how can I personalize this
+      - I want to customize my experience
+      - how do I personalize settings
+      - customize my preferences
+      - I want to personalize
+      - how can I customize this
+      - personalize my experience
+      - I want to set preferences
+      - how do I customize
+      - help me personalize
+
+  - intent: affirm
+    examples: |
+      - yes
+      - y
+      - indeed
+      - of course
+      - that sounds good
+      - correct
+      - that's right
+      - sure
+      - ok
+      - okay
+
+  - intent: deny
+    examples: |
+      - no
+      - n
+      - never
+      - I don't think so
+      - don't like that
+      - no way
+      - not really
+      - that's not right
+      - incorrect
+      - that's wrong
+
+  - intent: open_app
+    examples: |
+      - open [Safari](app_name)
+      - launch [Chrome](app_name)
+      - start [Notes](app_name)
+      - run [Mail](app_name)
+      - open [Terminal](app_name)
+      - launch [Finder](app_name)
+      - start [Calendar](app_name)
+      - run [Messages](app_name)
+      - open [Photos](app_name)
+      - launch [Music](app_name)
+
+  - intent: close_app
+    examples: |
+      - close [Safari](app_name)
+      - quit [Chrome](app_name)
+      - exit [Notes](app_name)
+      - stop [Mail](app_name)
+      - close [Terminal](app_name)
+      - quit [Finder](app_name)
+      - exit [Calendar](app_name)
+      - stop [Messages](app_name)
+      - close [Photos](app_name)
+      - quit [Music](app_name)
+
+  - intent: app_action
+    examples: |
+      - refresh [Safari](app_name)
+      - new tab in [Chrome](app_name)
+      - create note in [Notes](app_name)
+      - compose email in [Mail](app_name)
+      - clear [Terminal](app_name)
+      - search in [Finder](app_name)
+      - add event in [Calendar](app_name)
+      - send message in [Messages](app_name)
+      - edit photo in [Photos](app_name)
+      - play music in [Music](app_name)
+
+  - intent: list_apps
+    examples: |
+      - what apps can you control
+      - show available apps
+      - list applications
+      - what applications do you support
+      - show me the apps
+      - what apps can I use
+      - list supported apps
+      - show me available applications
+      - what apps are available
+      - display supported applications
+
+  - intent: control_app
+    examples: |
+      - control [Safari](app_name)
+      - manage [Chrome](app_name)
+      - handle [Notes](app_name)
+      - operate [Mail](app_name)
+      - work with [Terminal](app_name)
+      - use [Finder](app_name)
+      - manage [Calendar](app_name)
+      - control [Messages](app_name)
+      - handle [Photos](app_name)
+      - operate [Music](app_name)
+
+  - intent: open_safari_new_tab
+    examples: |
+      - open new tab in Safari
+      - create new Safari tab
+      - new tab in Safari
+      - Safari new tab
+      - open another tab in Safari
+      - add new tab to Safari
+      - create tab in Safari
+      - new Safari tab
+      - open tab in Safari
+      - add tab to Safari
+
+  - intent: refresh_chrome
+    examples: |
+      - refresh Chrome
+      - reload Chrome
+      - refresh current Chrome tab
+      - reload current Chrome page
+      - refresh Chrome browser
+      - reload Chrome browser
+      - refresh page in Chrome
+      - reload page in Chrome
+      - refresh Chrome window
+      - reload Chrome window
+
+  - intent: create_note
+    examples: |
+      - create a new note
+      - make a note
+      - add a note
+      - create note
+      - new note
+      - write a note
+      - add note
+      - make new note
+      - create another note
+      - start a new note
+
+  - intent: create_mail
+    examples: |
+      - create new email
+      - compose email
+      - write new email
+      - draft email
+      - new email
+      - start email
+      - compose new email
+      - write email
+      - create another email
+      - draft new email
+
+  - intent: activate_bot
+    examples: |
+      - Hey Assistant
+      - Hey Bot
+      - Hello Assistant
+      - Wake up
+      - Are you there
+      - Start listening
+      - Activate
+      - Turn on
+
+  - intent: deactivate_bot
+    examples: |
+      - Goodbye Assistant
+      - Stop listening
+      - Go to sleep
+      - Deactivate
+      - Turn off
+      - Stop
+
+  - intent: compound_command
+    examples: |
+      - open [Safari](app_name) and search for [weather in Paris](text)
+      - create a [note](app_name) and set a [reminder for 5pm](text)
+      - open [Chrome](app_name), go to [YouTube](text), and play [music](text)
+      - open [Mail](app_name) and draft an email to [John](text) about [the meeting](subject)
+      - open [Notes](app_name) and create a note: [Buy groceries](text)
+      - open [Calendar](app_name) and add an event [Doctor appointment at 3pm](text)
+      - open [Safari](app_name), search for [best pizza places nearby](text), and bookmark the page
+      - open [Spotify](app_name) and play [my workout playlist](text)
+      - open [Reminders](app_name) and add [call mom at 6pm](text)
+      - open [Maps](app_name) and get directions to [Central Park](text)

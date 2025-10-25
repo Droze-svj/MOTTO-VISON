@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: motto-backend-staging
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main_improved:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: staging
+      - key: DEBUG  
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: motto-db
+          property: connectionString
+    healthCheckPath: /health
+    
+databases:
+  - name: motto-db
+    databaseName: motto_staging
+    user: motto
+    plan: free
+    # Free tier: 90 days, then $7/month
+

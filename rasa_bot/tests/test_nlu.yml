@@ -1,0 +1,25 @@
+version: "3.1"
+nlu:
+  - intent: greet
+    examples: |
+      - hello
+      - hi
+      - hey
+
+  - intent: set_reminder
+    examples: |
+      - remind me to [call mom](text) at [5pm](time)
+      - set a reminder for [meeting](text) at [2pm](time)
+      - remind me about [doctor appointment](text) tomorrow
+
+  - intent: provide_name
+    examples: |
+      - my name is [John](name)
+      - I am [Sarah](name)
+      - call me [Mike](name)
+
+  - intent: translate_text
+    examples: |
+      - translate [hello world](text) to [Spanish](language)
+      - how do you say [good morning](text) in [French](language)
+      - translate this: [thank you](text) 

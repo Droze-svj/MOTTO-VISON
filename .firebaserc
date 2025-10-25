@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "motto-vison",
+    "staging": "motto-vison-staging"
+  },
+  "targets": {},
+  "etags": {}
+}
+

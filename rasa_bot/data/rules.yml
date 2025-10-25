@@ -1,0 +1,76 @@
+version: "3.1"
+
+rules:
+  - rule: Say goodbye anytime the user says goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - rule: Say I am a bot anytime the user challenges
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
+
+  - rule: Activate bot
+    steps:
+      - intent: activate_bot
+      - action: action_toggle_bot
+      - action: utter_bot_activated
+
+  - rule: Deactivate bot
+    steps:
+      - intent: deactivate_bot
+      - action: action_toggle_bot
+      - action: utter_bot_deactivated
+
+# --- New rules for advanced tasks ---
+- rule: Schedule meeting rule
+  steps:
+    - intent: schedule_meeting
+    - action: meeting_scheduler_form
+    - active_loop: meeting_scheduler_form
+    - active_loop: null
+
+- rule: Manage tasks rule
+  steps:
+    - intent: manage_tasks
+    - action: task_manager_form
+    - active_loop: task_manager_form
+    - active_loop: null
+
+- rule: Analyze text rule
+  steps:
+    - intent: analyze_text
+    - action: utter_ask_text_to_analyze
+
+- rule: Summarize content rule
+  steps:
+    - intent: summarize_content
+    - action: utter_ask_text_to_summarize
+
+- rule: Batch translate rule
+  steps:
+    - intent: batch_translate
+    - action: batch_translation_form
+    - active_loop: batch_translation_form
+    - active_loop: null
+
+- rule: Handle context rule
+  steps:
+    - intent: handle_context
+    - action: utter_ask_context
+
+- rule: Track progress rule
+  steps:
+    - intent: track_progress
+    - action: action_track_progress
+
+- rule: Handle errors rule
+  steps:
+    - intent: handle_errors
+    - action: utter_ask_error_type
+
+- rule: Provide feedback rule
+  steps:
+    - intent: provide_feedback
+    - action: utter_ask_feedback

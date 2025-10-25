@@ -1,0 +1,34 @@
+# Translation Configuration
+default_language: "en"
+supported_languages:
+  en: "English"
+  es: "Spanish"
+  fr: "French"
+  de: "German"
+  it: "Italian"
+  pt: "Portuguese"
+  ru: "Russian"
+  zh: "Chinese"
+  ja: "Japanese"
+  ko: "Korean"
+
+# Translation Service Configuration
+translation_service: "google"  # Options: google, deep_translator
+api_key: ""  # Add your API key if using a paid service
+
+# Language Detection Settings
+auto_detect_language: true
+confidence_threshold: 0.8
+
+# Response Templates
+language_switch_messages:
+  en: "I'll switch to English."
+  es: "Cambiaré a español."
+  fr: "Je vais passer au français."
+  de: "Ich werde auf Deutsch wechseln."
+  it: "Passerò all'italiano."
+  pt: "Vou mudar para português."
+  ru: "Я переключусь на русский."
+  zh: "我将切换到中文。"
+  ja: "日本語に切り替えます。"
+  ko: "한국어로 전환하겠습니다." 

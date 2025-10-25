@@ -1,0 +1,112 @@
+{
+  "version": "1.0.0",
+  "environments": {
+    "development": {
+      "apiUrl": "https://dev-api.motto.com",
+      "analyticsEnabled": false,
+      "loggingLevel": "debug"
+    },
+    "staging": {
+      "apiUrl": "https://staging-api.motto.com",
+      "analyticsEnabled": true,
+      "loggingLevel": "info"
+    },
+    "production": {
+      "apiUrl": "https://api.motto.com",
+      "analyticsEnabled": true,
+      "loggingLevel": "error"
+    }
+  },
+  "build": {
+    "ios": {
+      "scheme": "Motto",
+      "configuration": "Release",
+      "exportMethod": "app-store",
+      "teamId": "YOUR_TEAM_ID",
+      "provisioningProfile": "Motto_App_Store",
+      "certificate": "Apple Distribution"
+    },
+    "android": {
+      "buildType": "release",
+      "keystore": "motto.keystore",
+      "keystorePassword": "YOUR_KEYSTORE_PASSWORD",
+      "keyAlias": "motto",
+      "keyPassword": "YOUR_KEY_PASSWORD"
+    }
+  },
+  "test": {
+    "coverage": {
+      "threshold": {
+        "statements": 80,
+        "branches": 80,
+        "functions": 80,
+        "lines": 80
+      },
+      "exclude": [
+        "**/node_modules/**",
+        "**/coverage/**",
+        "**/vendor/**",
+        "**/__tests__/**"
+      ]
+    },
+    "platforms": {
+      "ios": {
+        "simulator": "iPhone 14",
+        "osVersion": "16.0"
+      },
+      "android": {
+        "device": "Pixel 6",
+        "osVersion": "13"
+      }
+    }
+  },
+  "deploy": {
+    "ios": {
+      "appStore": {
+        "apiKey": "YOUR_APP_STORE_API_KEY",
+        "apiIssuer": "YOUR_APP_STORE_API_ISSUER",
+        "bundleId": "com.motto.app"
+      }
+    },
+    "android": {
+      "playStore": {
+        "serviceAccount": "play-store-service-account.json",
+        "packageName": "com.motto.app",
+        "track": "production"
+      }
+    }
+  },
+  "notifications": {
+    "slack": {
+      "webhookUrl": "YOUR_SLACK_WEBHOOK_URL",
+      "channel": "#motto-deployments"
+    },
+    "email": {
+      "recipients": ["team@motto.com"],
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "secure": true
+      }
+    }
+  },
+  "security": {
+    "codeSigning": {
+      "ios": {
+        "certificate": "YOUR_IOS_CERTIFICATE",
+        "provisioningProfile": "YOUR_PROVISIONING_PROFILE"
+      },
+      "android": {
+        "keystore": "YOUR_ANDROID_KEYSTORE",
+        "keyAlias": "YOUR_KEY_ALIAS"
+      }
+    },
+    "secrets": {
+      "encryptionKey": "YOUR_ENCRYPTION_KEY",
+      "apiKeys": {
+        "stripe": "YOUR_STRIPE_API_KEY",
+        "firebase": "YOUR_FIREBASE_API_KEY"
+      }
+    }
+  }
+} 

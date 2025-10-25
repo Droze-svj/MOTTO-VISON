@@ -1,0 +1,128 @@
+{
+  "dependencyUpdates": {
+    "schedule": "daily",
+    "autoMerge": false,
+    "maxConcurrentUpdates": 5,
+    "ignorePatterns": [
+      "alpha",
+      "beta",
+      "rc",
+      "preview"
+    ],
+    "updateTypes": [
+      "patch",
+      "minor"
+    ]
+  },
+  "securityScans": {
+    "frequency": "daily",
+    "tools": {
+      "npm": {
+        "audit": true,
+        "outdated": true
+      },
+      "safety": {
+        "enabled": true,
+        "ignoreIds": []
+      },
+      "bandit": {
+        "enabled": true,
+        "severity": "medium"
+      }
+    }
+  },
+  "mobileSecurity": {
+    "android": {
+      "dependencyCheck": {
+        "enabled": true,
+        "suppressionFile": "android-suppressions.xml"
+      },
+      "gradleUpdates": {
+        "enabled": true,
+        "checkForGradleUpdates": true
+      }
+    },
+    "ios": {
+      "cocoapods": {
+        "enabled": true,
+        "updateFrequency": "weekly"
+      },
+      "xcodeUpdates": {
+        "enabled": true,
+        "checkForUpdates": true
+      }
+    }
+  },
+  "notifications": {
+    "channels": [
+      "email",
+      "slack"
+    ],
+    "recipients": {
+      "email": [
+        "security@example.com"
+      ],
+      "slack": [
+        "#security-alerts"
+      ]
+    },
+    "severityLevels": {
+      "critical": {
+        "notifyImmediately": true,
+        "channels": ["email", "slack"]
+      },
+      "high": {
+        "notifyImmediately": true,
+        "channels": ["slack"]
+      },
+      "medium": {
+        "notifyImmediately": false,
+        "channels": ["slack"]
+      },
+      "low": {
+        "notifyImmediately": false,
+        "channels": []
+      }
+    }
+  },
+  "compliance": {
+    "gdpr": {
+      "enabled": true,
+      "checkFrequency": "weekly"
+    },
+    "hipaa": {
+      "enabled": true,
+      "checkFrequency": "weekly"
+    },
+    "pci": {
+      "enabled": true,
+      "checkFrequency": "weekly"
+    },
+    "ccpa": {
+      "enabled": true,
+      "checkFrequency": "weekly"
+    },
+    "iso27001": {
+      "enabled": true,
+      "checkFrequency": "monthly"
+    },
+    "soc2": {
+      "enabled": true,
+      "checkFrequency": "monthly"
+    }
+  },
+  "patching": {
+    "autoApply": {
+      "enabled": false,
+      "maxSeverity": "medium"
+    },
+    "testing": {
+      "required": true,
+      "timeout": 3600
+    },
+    "rollback": {
+      "enabled": true,
+      "maxAttempts": 3
+    }
+  }
+} 

@@ -1,0 +1,144 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * *'  # Run daily
+
+jobs:
+  performance:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        platform: [ios, android]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        cd app
+        npm ci
+
+    - name: Install iOS dependencies
+      if: matrix.os == 'macos-latest' && matrix.platform == 'ios'
+      run: |
+        cd app/ios
+        pod install
+
+    - name: Run performance tests
+      run: |
+        cd app
+        npm run test:performance -- --platform=${{ matrix.platform }}
+
+    - name: Run React Native Performance Monitor
+      run: |
+        cd app
+        npm run monitor:performance -- --platform=${{ matrix.platform }}
+
+    - name: Run FPS tests
+      run: |
+        cd app
+        npm run test:fps -- --platform=${{ matrix.platform }}
+
+    - name: Run memory leak tests
+      run: |
+        cd app
+        npm run test:memory -- --platform=${{ matrix.platform }}
+
+    - name: Generate performance report
+      run: |
+        cd app
+        npm run generate:performance-report
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results-${{ matrix.os }}-${{ matrix.platform }}
+        path: app/performance-results/
+
+  benchmark:
+    needs: performance
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download performance results
+      uses: actions/download-artifact@v3
+      with:
+        path: performance-results
+
+    - name: Run benchmarks
+      run: |
+        cd app
+        npm run benchmark
+
+    - name: Compare with baseline
+      run: |
+        cd app
+        npm run compare:benchmarks
+
+    - name: Generate benchmark report
+      run: |
+        cd app
+        npm run generate:benchmark-report
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: app/benchmark-results/
+
+  analyze:
+    needs: [performance, benchmark]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download all results
+      uses: actions/download-artifact@v3
+      with:
+        path: results
+
+    - name: Analyze performance data
+      run: |
+        cd app
+        npm run analyze:performance
+
+    - name: Generate performance insights
+      run: |
+        cd app
+        npm run generate:insights
+
+    - name: Create performance report
+      run: |
+        cd app
+        npm run create:performance-report
+
+    - name: Upload analysis results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-analysis
+        path: app/analysis-results/
+
+    - name: Notify team
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'Performance Regression Detected',
+            body: 'Performance tests have detected regressions. Please check the performance analysis report.'
+          }); 

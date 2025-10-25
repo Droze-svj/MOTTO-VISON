@@ -1,0 +1,973 @@
+/**
+ * Enhanced ChatScreen - Modern Design with All New Features
+ * Features: Streaming, Emotions, Analytics, Knowledge Graph, and more!
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  Alert,
+  Dimensions,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+
+// Core Services
+import MasterAIService from '../services/core/MasterAIService';
+import ContextMemoryService from '../services/core/ContextMemoryService';
+import VoiceIntegrationService from '../services/core/VoiceIntegrationService';
+
+// New Advanced Services
+import {
+  StreamingResponseService,
+  ConversationAnalyticsService,
+  EmotionTrackingService,
+  KnowledgeGraphService,
+  ContextCompressionService,
+  MultiTurnPlanningService,
+  AdaptiveDifficultyService,
+  ConversationBranchingService,
+  InterruptionHandlerService,
+  PersonalizedKnowledgeBaseService,
+} from '../services/advanced';
+
+import { modernTheme } from '../theme/modernTheme';
+
+const { width } = Dimensions.get('window');
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+  sources?: string[];
+  confidence?: number;
+  emotion?: string;
+  emotionIntensity?: number;
+  responseTime?: number;
+  isStreaming?: boolean;
+}
+
+interface ChatScreenProps {
+  userId: string;
+  onOpenSettings?: () => void;
+  onOpenPersonalization?: () => void;
+}
+
+export const EnhancedChatScreen: React.FC<ChatScreenProps> = ({
+  userId = 'default_user',
+  onOpenSettings,
+  onOpenPersonalization,
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [currentEmotion, setCurrentEmotion] = useState<string>('neutral');
+  const [sessionId, setSessionId] = useState<string>('');
+  const [showInsights, setShowInsights] = useState(false);
+  const [activePlan, setActivePlan] = useState<any>(null);
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Initialize services
+  useEffect(() => {
+    initializeServices();
+  }, [userId]);
+
+  const initializeServices = async () => {
+    // Start analytics session
+    const newSessionId = await ConversationAnalyticsService.startSession(userId);
+    setSessionId(newSessionId);
+
+    // Initialize user profiles
+    await EmotionTrackingService.analyzeEmotion('hello', userId);
+    await AdaptiveDifficultyService.initializeUser(userId);
+    await KnowledgeGraphService.initializeGraph(userId);
+    await ConversationBranchingService.createRootBranch(userId, 'General Chat');
+    await PersonalizedKnowledgeBaseService.initializeKnowledgeBase(userId);
+
+    // Welcome animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // Pulse animation for AI thinking
+  useEffect(() => {
+    if (isLoading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.3,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isLoading]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
+
+  // Send message with all new features
+  const handleSend = async () => {
+    if (!inputText.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: inputText.trim(),
+      timestamp: Date.now(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputText.trim();
+    setInputText('');
+    setIsLoading(true);
+
+    try {
+      const startTime = Date.now();
+
+      // 1. Detect emotion
+      const emotions = await EmotionTrackingService.analyzeEmotion(currentInput, userId);
+      const primaryEmotion = emotions[0];
+      setCurrentEmotion(primaryEmotion.emotion);
+
+      // 2. Track in analytics
+      await ConversationAnalyticsService.trackMessage(
+        sessionId,
+        'user',
+        currentInput,
+        {
+          topic: 'conversation',
+          emotion: primaryEmotion.emotion,
+        }
+      );
+
+      // 3. Build knowledge graph
+      await KnowledgeGraphService.processText(userId, currentInput);
+
+      // 4. Check for interruption
+      const previousMessages = messages.slice(-5).map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const interruption = InterruptionHandlerService.detectInterruption(
+        userId,
+        currentInput,
+        'current_topic',
+        previousMessages
+      );
+
+      // 5. Get compressed context for long conversations
+      let context = {};
+      if (messages.length > 20) {
+        const messagesToCompress = messages.map(m => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp,
+        }));
+        const compressed = await ContextCompressionService.compressConversation(
+          messagesToCompress
+        );
+        context = { compressed: compressed.summary, keyPoints: compressed.keyPoints };
+      }
+
+      // 6. Get AI response
+      const response = await MasterAIService.chatWithMetadata(userId, currentInput, {
+        conversationLength: messages.length,
+        isFollowUp: messages.length > 1,
+        currentEmotion: primaryEmotion.emotion,
+        ...context,
+      });
+
+      // 7. Adapt response difficulty
+      const adaptedResponse = await AdaptiveDifficultyService.adaptContent(
+        userId,
+        response.text,
+        'general'
+      );
+
+      const responseTime = Date.now() - startTime;
+
+      // 8. Create placeholder for streaming
+      const placeholderMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+        sources: response.sources,
+        confidence: response.confidence,
+        emotion: primaryEmotion.emotion,
+        emotionIntensity: primaryEmotion.intensity,
+        responseTime,
+        isStreaming: true,
+      };
+
+      setMessages(prev => [...prev, placeholderMessage]);
+
+      // 9. Stream response
+      let streamedText = '';
+      for await (const chunk of StreamingResponseService.streamResponse(adaptedResponse)) {
+        streamedText = chunk;
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastMessage = updated[updated.length - 1];
+          if (lastMessage.id === placeholderMessage.id) {
+            lastMessage.content = chunk;
+            lastMessage.isStreaming = true;
+          }
+          return updated;
+        });
+      }
+
+      // 10. Mark streaming complete
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastMessage = updated[updated.length - 1];
+        if (lastMessage.id === placeholderMessage.id) {
+          lastMessage.isStreaming = false;
+        }
+        return updated;
+      });
+
+      // 11. Track AI response
+      await ConversationAnalyticsService.trackMessage(
+        sessionId,
+        'assistant',
+        streamedText,
+        { responseTime }
+      );
+
+      // 12. Add to knowledge base
+      await PersonalizedKnowledgeBaseService.addKnowledge(
+        userId,
+        `User asked: ${currentInput}`,
+        'memory',
+        'stated',
+        0.8
+      );
+
+      // 13. Check for active plan
+      const activePlans = MultiTurnPlanningService.getActivePlans(userId);
+      if (activePlans.length > 0) {
+        setActivePlan(activePlans[0]);
+      }
+
+    } catch (err) {
+      console.error('Chat error:', err);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I'm having trouble processing that. Could you try rephrasing?",
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Voice input
+  const handleVoiceInput = async () => {
+    const voiceAvailable = VoiceIntegrationService.isAvailable();
+    
+    if (!voiceAvailable.speechToText) {
+      Alert.alert('Voice Not Available', 'Voice recognition is not available on this device.');
+      return;
+    }
+
+    setIsListening(true);
+    try {
+      await VoiceIntegrationService.startListening(
+        (transcribedText) => {
+          setInputText(transcribedText);
+          setIsListening(false);
+        },
+        (error) => {
+          console.error('[Voice] Error:', error);
+          setIsListening(false);
+        },
+        'en-US'
+      );
+    } catch (err) {
+      console.error('Voice error:', err);
+      setIsListening(false);
+    }
+  };
+
+  // Show insights modal
+  const handleShowInsights = async () => {
+    setShowInsights(true);
+  };
+
+  // Welcome message
+  useEffect(() => {
+    if (messages.length === 0) {
+      const hour = new Date().getHours();
+      let greeting = 'Hey there!';
+      
+      if (hour >= 5 && hour < 12) greeting = 'Good morning!';
+      else if (hour >= 12 && hour < 17) greeting = 'Good afternoon!';
+      else if (hour >= 17 && hour < 22) greeting = 'Good evening!';
+
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        content: `${greeting} 👋\n\nI'm MOTTO - your intelligent AI companion. I understand emotions, learn from our conversations, and adapt to your style.\n\nWhat would you like to talk about?`,
+        timestamp: Date.now(),
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, []);
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      {/* Modern Header with Gradient */}
+      <LinearGradient
+        colors={modernTheme.gradients.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+              <Text style={styles.logo}>💭</Text>
+            </Animated.View>
+            <View>
+              <Text style={styles.headerTitle}>MOTTO</Text>
+              <Text style={styles.headerSubtitle}>
+                {currentEmotion && getEmotionEmoji(currentEmotion)} Enhanced AI
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleShowInsights}
+            >
+              <Text style={styles.iconText}>📊</Text>
+            </TouchableOpacity>
+            
+            {onOpenPersonalization && (
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={onOpenPersonalization}
+              >
+                <Text style={styles.iconText}>👤</Text>
+              </TouchableOpacity>
+            )}
+            
+            {onOpenSettings && (
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={onOpenSettings}
+              >
+                <Text style={styles.iconText}>⚙️</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Active Plan Indicator */}
+        {activePlan && (
+          <View style={styles.planIndicator}>
+            <Text style={styles.planText}>
+              🎯 {activePlan.goalDescription} ({activePlan.progress}%)
+            </Text>
+          </View>
+        )}
+      </LinearGradient>
+
+      {/* Messages */}
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messagesContainer}
+        contentContainerStyle={styles.messagesContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={{ opacity: fadeAnim }}>
+          {messages.map((message) => (
+            <EnhancedMessageBubble
+              key={message.id}
+              message={message}
+              isUser={message.role === 'user'}
+            />
+          ))}
+
+          {/* Loading Indicator */}
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <View style={styles.loadingBubble}>
+                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                  <Text style={styles.loadingEmoji}>🤔</Text>
+                </Animated.View>
+                <Text style={styles.loadingText}>Thinking...</Text>
+              </View>
+            </View>
+          )}
+        </Animated.View>
+      </ScrollView>
+
+      {/* Modern Input Area with Glassmorphism */}
+      <View style={styles.inputContainer}>
+        <View style={styles.inputWrapper}>
+          {/* Voice Button */}
+          <TouchableOpacity
+            style={[
+              styles.voiceButton,
+              isListening && styles.voiceButtonActive,
+            ]}
+            onPress={handleVoiceInput}
+            disabled={isLoading}
+          >
+            <LinearGradient
+              colors={isListening ? ['#EF4444', '#DC2626'] : modernTheme.gradients.accent}
+              style={styles.voiceGradient}
+            >
+              <Text style={styles.voiceIcon}>
+                {isListening ? '🔴' : '🎤'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Input Field */}
+          <View style={styles.inputField}>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type your message..."
+              placeholderTextColor={modernTheme.colors.gray[400]}
+              multiline
+              maxLength={2000}
+              editable={!isLoading}
+            />
+          </View>
+          
+          {/* Send Button */}
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={handleSend}
+            disabled={!inputText.trim() || isLoading}
+          >
+            <LinearGradient
+              colors={
+                !inputText.trim() || isLoading
+                  ? [modernTheme.colors.gray[300], modernTheme.colors.gray[400]]
+                  : modernTheme.gradients.primary
+              }
+              style={styles.sendGradient}
+            >
+              <Text style={styles.sendIcon}>
+                {isLoading ? '⏳' : '🚀'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Info Bar */}
+        <View style={styles.quickInfo}>
+          <Text style={styles.quickInfoText}>
+            ✨ Streaming • 😊 Emotion-aware • 🧠 Learning
+          </Text>
+        </View>
+      </View>
+
+      {/* Insights Panel (can be expanded) */}
+      {showInsights && (
+        <InsightsPanel
+          userId={userId}
+          sessionId={sessionId}
+          onClose={() => setShowInsights(false)}
+        />
+      )}
+    </KeyboardAvoidingView>
+  );
+};
+
+// Enhanced Message Bubble with Emotions
+const EnhancedMessageBubble: React.FC<{ message: Message; isUser: boolean }> = ({
+  message,
+  isUser,
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <View style={[styles.messageBubbleContainer, isUser && styles.messageBubbleContainerUser]}>
+      <TouchableOpacity
+        style={[
+          styles.messageBubble,
+          isUser ? styles.messageBubbleUser : styles.messageBubbleAssistant,
+        ]}
+        onLongPress={() => setShowDetails(!showDetails)}
+        activeOpacity={0.8}
+      >
+        {isUser ? (
+          <View style={styles.userBubble}>
+            <Text style={styles.messageTextUser}>{message.content}</Text>
+          </View>
+        ) : (
+          <LinearGradient
+            colors={['#FFFFFF', '#F8FAFC']}
+            style={styles.assistantBubble}
+          >
+            <Text style={styles.messageTextAssistant}>{message.content}</Text>
+
+            {/* Emotion Indicator */}
+            {message.emotion && (
+              <View style={styles.emotionIndicator}>
+                <Text style={styles.emotionText}>
+                  {getEmotionEmoji(message.emotion)}
+                </Text>
+              </View>
+            )}
+          </LinearGradient>
+        )}
+
+        {/* Metadata */}
+        {!isUser && showDetails && (
+          <View style={styles.messageMetadata}>
+            {message.sources && message.sources.length > 0 && (
+              <Text style={styles.sourcesText}>
+                📚 {message.sources.slice(0, 2).join(', ')}
+              </Text>
+            )}
+            {message.confidence && (
+              <Text style={styles.metadataText}>
+                🎯 {message.confidence}% confidence
+              </Text>
+            )}
+            {message.responseTime && (
+              <Text style={styles.metadataText}>
+                ⚡ {(message.responseTime / 1000).toFixed(1)}s
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* Timestamp */}
+        <Text style={[styles.timestamp, isUser && styles.timestampUser]}>
+          {new Date(message.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// Insights Panel Component
+const InsightsPanel: React.FC<{ userId: string; sessionId: string; onClose: () => void }> = ({
+  userId,
+  sessionId,
+  onClose,
+}) => {
+  const [insights, setInsights] = useState<any>(null);
+
+  useEffect(() => {
+    loadInsights();
+  }, []);
+
+  const loadInsights = async () => {
+    const analytics = await ConversationAnalyticsService.getMetrics(userId);
+    const emotions = await EmotionTrackingService.getEmotionalInsights(userId);
+    const knowledge = KnowledgeGraphService.getInsights(userId);
+
+    setInsights({ analytics, emotions, knowledge });
+  };
+
+  return (
+    <View style={styles.insightsOverlay}>
+      <View style={styles.insightsPanel}>
+        <View style={styles.insightsHeader}>
+          <Text style={styles.insightsTitle}>📊 Your AI Insights</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.closeButton}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.insightsContent}>
+          {insights && (
+            <>
+              <Text style={styles.insightSection}>📈 Analytics</Text>
+              <Text style={styles.insightText}>
+                Total Conversations: {insights.analytics.totalConversations}
+              </Text>
+              <Text style={styles.insightText}>
+                Avg Response Time: {(insights.analytics.averageResponseTime / 1000).toFixed(1)}s
+              </Text>
+
+              <Text style={styles.insightSection}>😊 Emotions</Text>
+              <Text style={styles.insightText}>{insights.emotions.summary}</Text>
+
+              {insights.knowledge && (
+                <>
+                  <Text style={styles.insightSection}>🧠 Knowledge</Text>
+                  {insights.knowledge.expertiseAreas.slice(0, 3).map((area: any, i: number) => (
+                    <Text key={i} style={styles.insightText}>
+                      {area.topic}: Level {area.level}/100
+                    </Text>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </View>
+    </View>
+  );
+};
+
+// Helper function
+const getEmotionEmoji = (emotion: string): string => {
+  const emojiMap: Record<string, string> = {
+    joy: '😊',
+    sadness: '😢',
+    anger: '😠',
+    fear: '😰',
+    surprise: '😮',
+    love: '❤️',
+    anxiety: '😟',
+    excitement: '🎉',
+    frustration: '😤',
+    confidence: '💪',
+    neutral: '😐',
+  };
+  return emojiMap[emotion] || '😐';
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: modernTheme.colors.gray[50],
+  },
+
+  // Header
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    ...modernTheme.shadows.md,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    fontSize: 36,
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: modernTheme.colors.white,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconText: {
+    fontSize: 20,
+  },
+  planIndicator: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+  },
+  planText: {
+    fontSize: 12,
+    color: modernTheme.colors.white,
+    fontWeight: '500',
+  },
+
+  // Messages
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  messageBubbleContainer: {
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  messageBubbleContainerUser: {
+    alignItems: 'flex-end',
+  },
+  messageBubble: {
+    maxWidth: width * 0.8,
+    borderRadius: 20,
+    ...modernTheme.shadows.sm,
+  },
+  userBubble: {
+    backgroundColor: modernTheme.colors.primary,
+    padding: 14,
+    borderRadius: 20,
+    borderBottomRightRadius: 4,
+  },
+  assistantBubble: {
+    padding: 14,
+    borderRadius: 20,
+    borderBottomLeftRadius: 4,
+  },
+  messageBubbleUser: {
+    backgroundColor: modernTheme.colors.primary,
+    borderBottomRightRadius: 4,
+  },
+  messageBubbleAssistant: {
+    backgroundColor: modernTheme.colors.white,
+    borderBottomLeftRadius: 4,
+  },
+  messageTextUser: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: modernTheme.colors.white,
+  },
+  messageTextAssistant: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: modernTheme.colors.gray[800],
+  },
+  emotionIndicator: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: modernTheme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...modernTheme.shadows.md,
+  },
+  emotionText: {
+    fontSize: 16,
+  },
+  timestamp: {
+    fontSize: 11,
+    color: modernTheme.colors.gray[400],
+    marginTop: 6,
+    paddingHorizontal: 14,
+  },
+  timestampUser: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  messageMetadata: {
+    marginTop: 8,
+    paddingTop: 8,
+    paddingHorizontal: 14,
+    borderTopWidth: 1,
+    borderTopColor: modernTheme.colors.gray[200],
+  },
+  sourcesText: {
+    fontSize: 11,
+    color: modernTheme.colors.gray[500],
+    marginBottom: 2,
+  },
+  metadataText: {
+    fontSize: 11,
+    color: modernTheme.colors.gray[500],
+  },
+
+  // Loading
+  loadingContainer: {
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  loadingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: modernTheme.colors.white,
+    borderRadius: 20,
+    borderBottomLeftRadius: 4,
+    padding: 14,
+    gap: 8,
+    ...modernTheme.shadows.sm,
+  },
+  loadingEmoji: {
+    fontSize: 24,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: modernTheme.colors.gray[600],
+    fontStyle: 'italic',
+  },
+
+  // Input
+  inputContainer: {
+    backgroundColor: modernTheme.colors.white,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    borderTopWidth: 1,
+    borderTopColor: modernTheme.colors.gray[200],
+    ...modernTheme.shadows.lg,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  voiceButton: {
+    width: 48,
+    height: 48,
+  },
+  voiceButtonActive: {
+    transform: [{ scale: 1.1 }],
+  },
+  voiceGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  voiceIcon: {
+    fontSize: 22,
+  },
+  inputField: {
+    flex: 1,
+    minHeight: 48,
+    maxHeight: 120,
+    backgroundColor: modernTheme.colors.gray[100],
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  input: {
+    fontSize: 16,
+    color: modernTheme.colors.gray[800],
+    includeFontPadding: false,
+  },
+  sendButton: {
+    width: 48,
+    height: 48,
+  },
+  sendGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendIcon: {
+    fontSize: 22,
+  },
+  quickInfo: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  quickInfoText: {
+    fontSize: 11,
+    color: modernTheme.colors.gray[500],
+  },
+
+  // Insights Panel
+  insightsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  insightsPanel: {
+    backgroundColor: modernTheme.colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  insightsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: modernTheme.colors.gray[200],
+  },
+  insightsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: modernTheme.colors.gray[900],
+  },
+  closeButton: {
+    fontSize: 28,
+    color: modernTheme.colors.gray[500],
+  },
+  insightsContent: {
+    padding: 20,
+  },
+  insightSection: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: modernTheme.colors.gray[800],
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  insightText: {
+    fontSize: 14,
+    color: modernTheme.colors.gray[600],
+    marginBottom: 4,
+  },
+});
+
+export default EnhancedChatScreen;
+

@@ -1,0 +1,191 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly
+
+jobs:
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run npm audit
+      run: |
+        cd app
+        npm audit --production
+
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+
+    - name: Run OWASP dependency check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'Motto App'
+        path: '.'
+        format: 'HTML'
+        out: 'reports'
+
+  code-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run SonarQube scan
+      uses: SonarSource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+    - name: Run ESLint security scan
+      run: |
+        cd app
+        npm run lint:security
+
+    - name: Run TypeScript security check
+      run: |
+        cd app
+        npm run type-check:security
+
+  mobile-security:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        platform: [ios, android]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run iOS security scan
+      if: matrix.platform == 'ios'
+      run: |
+        cd app/ios
+        xcodebuild -workspace Motto.xcworkspace -scheme Motto -configuration Debug -sdk iphonesimulator | xcpretty
+        security scan-ios Motto.app
+
+    - name: Run Android security scan
+      if: matrix.platform == 'android'
+      run: |
+        cd app/android
+        ./gradlew assembleDebug
+        security scan-android app/build/outputs/apk/debug/app-debug.apk
+
+  api-security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run API security tests
+      run: |
+        cd app
+        npm run test:api-security
+
+    - name: Run OWASP ZAP scan
+      uses: zaproxy/action-baseline@v0.7.0
+      with:
+        target: 'https://api.motto.com'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
+
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'motto-app:latest'
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
+
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run GDPR compliance check
+      run: |
+        cd app
+        npm run check:gdpr
+
+    - name: Run HIPAA compliance check
+      run: |
+        cd app
+        npm run check:hipaa
+
+    - name: Run PCI compliance check
+      run: |
+        cd app
+        npm run check:pci
+
+  report:
+    needs: [dependency-scan, code-scan, mobile-security, api-security, container-scan, compliance]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download all security scan results
+      uses: actions/download-artifact@v3
+      with:
+        path: security-results
+
+    - name: Generate security report
+      run: |
+        cd app
+        npm run generate:security-report
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-report
+        path: app/security-report/
+
+    - name: Notify security team
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'Security Issues Detected',
+            body: 'Security scans have detected issues. Please check the security report.'
+          }); 
+
+name: Python Security Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Run pip-audit
+        run: pip-audit 

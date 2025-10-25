@@ -1,0 +1,40 @@
+{
+  "hosting": {
+    "public": "build",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": {
+    "source": "backend",
+    "runtime": "python311",
+    "ignore": [
+      "venv",
+      ".git",
+      "__pycache__",
+      "*.pyc",
+      ".pytest_cache",
+      "tests"
+    ]
+  },
+  "appDistribution": {
+    "serviceAccountEmail": "firebase-adminsdk@motto-app.iam.gserviceaccount.com",
+    "groups": [
+      "internal-testers",
+      "beta-testers"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
+

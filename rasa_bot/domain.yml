@@ -1,0 +1,248 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - ask_help
+  - ask_mood
+  - inform_mood
+  - provide_name
+  - provide_preference
+  - set_reminder
+  - translate_text
+  - ask_translation
+  - provide_text
+  - change_language
+  - ask_supported_languages
+  - ask_translation_history
+  - ask_translation_stats
+  - ask_schedule
+  - ask_productivity_tip
+  - ask_personalization
+  - affirm
+  - deny
+  - open_app
+  - close_app
+  - app_action
+  - list_apps
+  - control_app
+  - open_safari_new_tab
+  - refresh_chrome
+  - create_note
+  - create_mail
+  - activate_bot
+  - deactivate_bot
+  - bot_challenge
+  - out_of_scope
+  - compound_command
+  - inform
+
+forms:
+  compound_command_form:
+    required_slots:
+      - app_name
+      - action
+      - text
+
+entities:
+  - app_name
+  - text
+  - subject
+  - name
+  - language
+  - time
+  - action
+  - preference
+  - user_name
+  - mood
+  - reminder_text
+  - reminder_time
+  - schedule
+  - text_to_translate
+
+slots:
+  app_name:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: app_name
+  text:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: text
+  subject:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: subject
+  name:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: name
+  language:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: language
+  time:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: time
+  action:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: action
+  preferences:
+    type: list
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: preference
+  user_name:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: user_name
+  mood:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: mood
+  reminder_text:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: reminder_text
+  reminder_time:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: reminder_time
+  schedule:
+    type: list
+    influence_conversation: true
+    mappings:
+    - type: custom
+  text_to_translate:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: text_to_translate
+
+responses:
+  utter_greet:
+    - text: "Hello {user_name}! 👋 How can I help you today?"
+    - text: "Hi {user_name}, ready to make today productive?"
+    - text: "Hello! 👋 I'm Motto, your personal productivity assistant. How can I help you today?"
+    - text: "Hi there! Ready to make today productive?"
+  utter_goodbye:
+    - text: "Goodbye! Remember, every day is a new opportunity. 😊"
+    - text: "See you soon! Stay motivated."
+    - text: "Take care! Come back when you need a productivity boost."
+  utter_help:
+    - text: "I can help you with:\n- Productivity tips\n- Schedule management\n- Setting reminders\n- Personal goal tracking\n- Mood tracking\n- Language translation\nWhat would you like to try?"
+  utter_ask_mood:
+    - text: "How are you feeling today?"
+    - text: "What's your current mood?"
+  utter_respond_to_mood:
+    - text: "I'm glad to hear you're feeling {mood}! Let's make the most of it."
+    - text: "Sorry to hear you're {mood}. Maybe a short walk or some music would help?"
+  utter_ask_name:
+    - text: "What should I call you?"
+    - text: "May I know your name?"
+  utter_confirm_name:
+    - text: "Nice to meet you, {user_name}!"
+    - text: "Great to meet you, {user_name}! How can I help you today?"
+  utter_ask_preference:
+    - text: "What is one thing you like or value in your daily routine?"
+    - text: "What activities help you stay focused and motivated?"
+  utter_confirm_preference:
+    - text: "Got it! I'll remember you like {preferences}."
+    - text: "Thanks for sharing! I'll keep your preferences in mind."
+  utter_confirm_reminder:
+    - text: "I'll remind you to {reminder_text} at {reminder_time}."
+    - text: "Reminder set: {reminder_text} at {reminder_time}."
+  utter_ask_schedule:
+    - text: "Let me check your schedule for today..."
+  utter_ask_productivity_tip:
+    - text: "Would you like a productivity tip tailored to your lifestyle?"
+    - text: "I can share some personalized productivity advice. Would you like that?"
+  utter_ask_personalization:
+    - text: "I love learning about you! What would you like to share about your preferences or goals?"
+    - text: "I'd love to personalize my suggestions for you. What are your interests?"
+  utter_ask_language:
+    - text: "What language would you like to use?"
+    - text: "Which language should I switch to?"
+  utter_ask_text_to_translate:
+    - text: "What would you like to translate?"
+    - text: "Please provide the text you want to translate."
+  utter_supported_languages:
+    - text: "I support the following languages: English (en), Spanish (es), French (fr), German (de), Italian (it), Portuguese (pt), Russian (ru), Chinese (zh), Japanese (ja), and Korean (ko)."
+  utter_ask_translation_history:
+    - text: "Would you like to see your recent translations?"
+    - text: "I can show you your translation history. Would you like to see it?"
+  utter_ask_translation_stats:
+    - text: "Would you like to see translation statistics?"
+    - text: "I can show you some interesting stats about translations. Would you like to see them?"
+  utter_affirm:
+    - text: "Great! Let me know what you need help with."
+    - text: "Perfect! I'm here to help."
+  utter_deny:
+    - text: "No problem! If you change your mind, just ask."
+    - text: "That's okay! Let me know if you need anything else."
+  utter_app_opened:
+    - text: "I have opened {app_name} for you."
+  utter_app_closed:
+    - text: "I have closed {app_name} for you."
+  utter_app_action_completed:
+    - text: "I have completed the requested action."
+  utter_list_apps:
+    - text: "Here are the available apps: {app_list}"
+  utter_ask_app_action:
+    - text: "What would you like to do with {app_name}?"
+  utter_iamabot:
+    - text: "I am a bot, powered by Rasa."
+  utter_bot_activated:
+    - text: "Bot activated! How can I help you?"
+  utter_bot_deactivated:
+    - text: "Bot deactivated. Goodbye!"
+  utter_error_step:
+    - text: "I am sorry, I could not understand that. Could you please try again?"
+  utter_error_command:
+    - text: "I apologize, but I could not process that command. Would you like to try something else?"
+
+actions:
+  - action_dynamic_personalized_tip
+  - action_store_preference
+  - action_store_name
+  - action_respond_to_mood
+  - action_set_reminder
+  - action_check_schedule
+  - action_change_language
+  - action_translate_message
+  - action_detect_language
+  - action_get_translation_history
+  - action_get_translation_stats
+  - action_translate_with_confidence
+  - action_open_app
+  - action_close_app
+  - action_perform_app_action
+  - action_list_available_apps
+  - action_open_safari_new_tab
+  - action_refresh_chrome
+  - action_create_note
+  - action_create_mail
+  - action_toggle_bot
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

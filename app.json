@@ -1,0 +1,55 @@
+{
+  "name": "VISIONMOTTO",
+  "displayName": "MOTTO - AI Assistant",
+  "expo": {
+    "name": "VISIONMOTTO",
+    "slug": "motto-ai-assistant",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0078d4"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.motto.aiassistant",
+      "buildNumber": "2.0.0",
+      "infoPlist": {
+        "UIStatusBarStyle": "light-content",
+        "UIViewControllerBasedStatusBarAppearance": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0078d4"
+      },
+      "package": "com.motto.aiassistant",
+      "versionCode": 200,
+      "statusBar": {
+        "backgroundColor": "#0078d4",
+        "barStyle": "light-content"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "themeColor": "#2196F3"
+    },
+    "plugins": [
+      "expo-haptics",
+      "expo-av",
+      "expo-sensors"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "motto-ai-assistant"
+      }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+name: Motto CI - Test Automation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-frontend:
+    name: Frontend Tests (React Native)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Run Jest tests (including accessibility)
+        run: npm test -- --ci --coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-coverage
+          path: app/coverage
+
+  test-backend:
+    name: Backend Tests (FastAPI)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+      - name: Run Pytest (with coverage)
+        run: |
+          source venv/bin/activate
+          pytest --cov=.
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-coverage
+          path: backend/htmlcov 
+
+  e2e-tests:
+    name: E2E Tests (Detox)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Install Detox dependencies
+        run: npm install -g applesimutils
+      - name: Build app for Detox
+        run: npm run build:e2e
+      - name: Run Detox E2E tests
+        run: detox test --configuration ios.sim.debug --headless
+
+  e2e-tests-android:
+    name: E2E Tests (Detox Android)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install
+      - name: Build app for Detox Android
+        run: npm run build:e2e:android
+      - name: Start Android emulator and run Detox tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: Pixel_5
+          script: npm run test:e2e:android
+
+  deploy:
+    needs: [test-frontend, test-backend, e2e-tests, e2e-tests-android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy motto-backend \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/motto-backend:$GITHUB_SHA \
+            --region ${{ secrets.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars SQLALCHEMY_DATABASE_URL=${{ secrets.PROD_DATABASE_URL }} 

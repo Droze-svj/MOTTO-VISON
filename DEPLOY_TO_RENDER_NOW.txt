@@ -1,0 +1,51 @@
+🎨 RENDER.COM DEPLOYMENT - COPY & PASTE GUIDE
+==============================================
+
+STEP 1: Create Account (1 minute)
+----------------------------------
+Visit: https://dashboard.render.com/register
+Click: "Sign Up with GitHub"
+✅ Done!
+
+STEP 2: Create Web Service (1 minute)
+--------------------------------------
+Click: "New +" (top right)
+Select: "Web Service"
+
+STEP 3: Configuration (Copy these exactly!)
+--------------------------------------------
+Name: motto-backend-staging
+Region: Oregon
+Environment: Python 3
+Root Directory: backend
+Build Command: pip install -r requirements.txt
+Start Command: uvicorn main_improved:app --host 0.0.0.0 --port $PORT
+Plan: Free
+
+STEP 4: Environment Variables (Click "Advanced")
+-------------------------------------------------
+SECRET_KEY = nEXuxUljwrto9kkSRZQZg8keeSudbhgqgspfqbaKkoM
+ENVIRONMENT = staging
+DEBUG = false
+LOG_LEVEL = INFO
+ALLOWED_ORIGINS = *
+DATABASE_URL = sqlite+aiosqlite:///./tokens.db
+
+STEP 5: Deploy
+--------------
+Click: "Create Web Service"
+Wait: 5-10 minutes
+
+STEP 6: Your URL
+----------------
+You'll get: https://motto-backend-staging.onrender.com
+
+Test it:
+curl https://motto-backend-staging.onrender.com/health
+
+DONE! ✅
+
+Next: Deploy mobile with ./deploy-mobile-complete.sh
+
+Total Time: 10 minutes
+Total Cost: $0

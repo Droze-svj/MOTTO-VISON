@@ -1,0 +1,1224 @@
+import React, {useEffect, useState, useRef} from 'react';
+import {
+  View, 
+  Text, 
+  StyleSheet, 
+  StatusBar, 
+  SafeAreaView, 
+  TextInput, 
+  TouchableOpacity, 
+  FlatList, 
+  KeyboardAvoidingView, 
+  Platform,
+  ActivityIndicator,
+  Alert,
+  ScrollView
+} from 'react-native';
+
+const App = () => {
+  // Utility function to safely handle numeric values and prevent NaN
+  const safeNumber = (value, defaultValue = 0) => {
+    const num = Number(value);
+    return isNaN(num) || !isFinite(num) ? defaultValue : num;
+  };
+
+  // Utility function to safely handle undefined values
+  const safeValue = (value, defaultValue = '') => {
+    return value !== undefined && value !== null ? value : defaultValue;
+  };
+
+  const [isConnected, setIsConnected] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [isSending, setIsSending] = useState(false);
+  const [conversationContext, setConversationContext] = useState({});
+  const [userProfile, setUserProfile] = useState({});
+  const [activeCapabilities, setActiveCapabilities] = useState([]);
+  const [complexityLevel, setComplexityLevel] = useState('advanced');
+  const [reasoningSteps, setReasoningSteps] = useState([]);
+  const flatListRef = useRef(null);
+
+  useEffect(() => {
+    // Simulate connection
+    setTimeout(() => setIsConnected(true), 2000);
+    
+    // Add welcome message
+    setMessages([
+      {
+        id: 'welcome-1',
+        role: 'assistant',
+        text: "Hello! I'm MOTTO, your advanced AI assistant with sophisticated functionality and complex reasoning capabilities. I can handle multi-step analysis, advanced problem-solving, and provide deep insights. What complex challenge would you like me to help you with? 🧠✨"
+      }
+    ]);
+  }, []);
+
+  // Advanced Complexity Analysis System
+  const analyzeComplexity = (text) => {
+    const lowerText = text.toLowerCase();
+    let complexity = 'basic';
+    let reasoningDepth = 1;
+    let analysisSteps = [];
+
+    // Complexity indicators
+    const basicIndicators = ['what is', 'simple', 'basic', 'easy', 'quick'];
+    const intermediateIndicators = ['how to', 'explain', 'compare', 'analyze', 'understand'];
+    const advancedIndicators = ['complex', 'advanced', 'sophisticated', 'multi-step', 'deep analysis', 'comprehensive'];
+    const expertIndicators = ['expert', 'master', 'optimize', 'architect', 'design system', 'strategic'];
+
+    if (expertIndicators.some(indicator => lowerText.includes(indicator))) {
+      complexity = 'expert';
+      reasoningDepth = 5;
+      analysisSteps = ['Initial Assessment', 'Deep Analysis', 'Strategic Planning', 'Implementation Strategy', 'Optimization'];
+    } else if (advancedIndicators.some(indicator => lowerText.includes(indicator))) {
+      complexity = 'advanced';
+      reasoningDepth = 4;
+      analysisSteps = ['Problem Analysis', 'Solution Design', 'Implementation Plan', 'Validation'];
+    } else if (intermediateIndicators.some(indicator => lowerText.includes(indicator))) {
+      complexity = 'intermediate';
+      reasoningDepth = 3;
+      analysisSteps = ['Understanding', 'Solution', 'Verification'];
+    } else if (basicIndicators.some(indicator => lowerText.includes(indicator))) {
+      complexity = 'basic';
+      reasoningDepth = 2;
+      analysisSteps = ['Answer', 'Explanation'];
+    }
+
+    return { complexity, reasoningDepth, analysisSteps };
+  };
+
+  // Enhanced Spelling Error Tolerance System
+  const correctSpelling = (text, errors) => {
+    let correctedText = text;
+    
+    if (errors && errors.length > 0) {
+      errors.forEach(error => {
+        const regex = new RegExp(`\\b${error.original}\\b`, 'gi');
+        correctedText = correctedText.replace(regex, error.corrected);
+      });
+    } else {
+      // Fallback to basic correction if no errors provided
+      const commonTypos = {
+        'artifical': 'artificial',
+        'inteligence': 'intelligence',
+        'tecnology': 'technology',
+        'progamming': 'programming',
+        'mashine': 'machine',
+        'algoritm': 'algorithm',
+        'databse': 'database',
+        'netwrok': 'network',
+        'secuity': 'security',
+        'perfomance': 'performance',
+        'optmization': 'optimization',
+        'implemntation': 'implementation',
+        'architectre': 'architecture',
+        'framewrk': 'framework',
+        'librry': 'library',
+        'functon': 'function',
+        'varible': 'variable',
+        'condtion': 'condition',
+        'iteraton': 'iteration',
+        'recurson': 'recursion',
+        'wat': 'what',
+        'wut': 'what',
+        'howw': 'how',
+        'whyy': 'why',
+        'wheen': 'when',
+        'wher': 'where',
+        'whho': 'who',
+        'wich': 'which',
+        'cann': 'can',
+        'shuld': 'should',
+        'cud': 'could',
+        'wud': 'would',
+        'wil': 'will',
+        'explain': 'explain',
+        'explan': 'explain',
+        'reserch': 'research',
+        'studdy': 'study',
+        'investgate': 'investigate',
+        'analize': 'analyze',
+        'compair': 'compare',
+        'diffrence': 'difference',
+        'solv': 'solve',
+        'creat': 'create',
+        'desin': 'design',
+        'buildd': 'build',
+        'develp': 'develop',
+        'implemnt': 'implement',
+        'testt': 'test',
+        'debbug': 'debug',
+        'optmize': 'optimize',
+        'improv': 'improve',
+        'enhanc': 'enhance',
+        'upgrad': 'upgrade'
+      };
+      
+      Object.entries(commonTypos).forEach(([typo, correct]) => {
+        const regex = new RegExp(`\\b${typo}\\b`, 'gi');
+        correctedText = correctedText.replace(regex, correct);
+      });
+    }
+
+    return correctedText;
+  };
+
+  // Fuzzy Matching for Question Understanding
+  const fuzzyMatch = (input, patterns) => {
+    const correctedInput = correctSpelling(input);
+    
+    for (const pattern of patterns) {
+      if (correctedInput.includes(pattern)) {
+        return true;
+      }
+    }
+    
+    const similarWords = {
+      'what': ['wat', 'wut', 'wht'],
+      'how': ['howw', 'ho', 'hw'],
+      'why': ['whyy', 'wy', 'y'],
+      'when': ['wheen', 'wen', 'whn'],
+      'where': ['wher', 'whr', 'wer'],
+      'who': ['whho', 'hoo', 'wo'],
+      'which': ['wich', 'wch', 'wich'],
+      'can': ['cann', 'cn', 'ca'],
+      'should': ['shuld', 'shld', 'shd'],
+      'could': ['cud', 'cld', 'cd'],
+      'would': ['wud', 'wld', 'wd'],
+      'will': ['wil', 'wl', 'wi']
+    };
+
+    for (const [correct, variations] of Object.entries(similarWords)) {
+      if (variations.some(variation => correctedInput.includes(variation))) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Advanced Multi-Step Reasoning System
+  const generateReasoningSteps = (question, complexity) => {
+    const steps = [];
+    
+    if (complexity === 'expert') {
+      steps.push(
+        "🔍 **Step 1: Comprehensive Problem Analysis**",
+        "📊 **Step 2: Multi-Dimensional Data Analysis**", 
+        "🎯 **Step 3: Strategic Solution Design**",
+        "⚙️ **Step 4: Advanced Implementation Planning**",
+        "🚀 **Step 5: Optimization & Future-Proofing**"
+      );
+    } else if (complexity === 'advanced') {
+      steps.push(
+        "🔍 **Step 1: Deep Problem Analysis**",
+        "📊 **Step 2: Advanced Solution Design**",
+        "⚙️ **Step 3: Implementation Strategy**",
+        "✅ **Step 4: Validation & Testing**"
+      );
+    } else if (complexity === 'intermediate') {
+      steps.push(
+        "🔍 **Step 1: Problem Understanding**",
+        "💡 **Step 2: Solution Development**",
+        "✅ **Step 3: Verification**"
+      );
+    } else {
+      steps.push(
+        "💡 **Step 1: Direct Answer**",
+        "📝 **Step 2: Explanation**"
+      );
+    }
+    
+    return steps;
+  };
+
+  // Enhanced Task Capability Detection with Advanced AI Intelligence
+  const detectTaskCapabilities = (text) => {
+    const lowerText = text.toLowerCase();
+    const capabilities = [];
+
+    // Core AI Capabilities
+    if (fuzzyMatch(lowerText, ['research', 'study', 'investigate', 'explore', 'find', 'discover'])) {
+      capabilities.push('research');
+    }
+    if (fuzzyMatch(lowerText, ['analyze', 'analysis', 'examine', 'evaluate', 'assess', 'review'])) {
+      capabilities.push('analysis');
+    }
+    if (fuzzyMatch(lowerText, ['solve', 'fix', 'resolve', 'troubleshoot', 'debug', 'repair'])) {
+      capabilities.push('problem_solving');
+    }
+    if (fuzzyMatch(lowerText, ['create', 'design', 'invent', 'innovate', 'brainstorm', 'imagine'])) {
+      capabilities.push('creative_thinking');
+    }
+    if (fuzzyMatch(lowerText, ['code', 'program', 'develop', 'build', 'implement', 'algorithm'])) {
+      capabilities.push('technical_expertise');
+    }
+    if (fuzzyMatch(lowerText, ['plan', 'strategy', 'roadmap', 'approach', 'methodology'])) {
+      capabilities.push('strategic_planning');
+    }
+    if (fuzzyMatch(lowerText, ['explain', 'teach', 'educate', 'clarify', 'help', 'guide'])) {
+      capabilities.push('communication');
+    }
+    if (fuzzyMatch(lowerText, ['learn', 'understand', 'comprehend', 'grasp', 'master'])) {
+      capabilities.push('learning');
+    }
+
+    // Advanced AI Capabilities
+    if (fuzzyMatch(lowerText, ['architecture', 'system design', 'infrastructure', 'scalability'])) {
+      capabilities.push('system_design');
+    }
+    if (fuzzyMatch(lowerText, ['statistics', 'data analysis', 'metrics', 'measurement', 'quantify'])) {
+      capabilities.push('statistical_analysis');
+    }
+    if (fuzzyMatch(lowerText, ['curriculum', 'course design', 'educational program', 'training'])) {
+      capabilities.push('curriculum_design');
+    }
+    if (fuzzyMatch(lowerText, ['root cause', 'underlying issue', 'core problem', 'fundamental'])) {
+      capabilities.push('root_cause_analysis');
+    }
+    if (fuzzyMatch(lowerText, ['innovation', 'breakthrough', 'revolutionary', 'cutting-edge'])) {
+      capabilities.push('innovation');
+    }
+    if (fuzzyMatch(lowerText, ['strategic thinking', 'long-term', 'vision', 'foresight'])) {
+      capabilities.push('strategic_thinking');
+    }
+    if (fuzzyMatch(lowerText, ['decision', 'choice', 'option', 'recommendation', 'advice'])) {
+      capabilities.push('decision_making');
+    }
+    if (fuzzyMatch(lowerText, ['user experience', 'ux', 'usability', 'interface', 'interaction'])) {
+      capabilities.push('user_experience');
+    }
+
+    // AI-Specific Capabilities
+    if (fuzzyMatch(lowerText, ['ai', 'artificial intelligence', 'machine learning', 'neural network'])) {
+      capabilities.push('ai_expertise');
+    }
+    if (fuzzyMatch(lowerText, ['natural language', 'nlp', 'text processing', 'language understanding'])) {
+      capabilities.push('nlp_capabilities');
+    }
+    if (fuzzyMatch(lowerText, ['prediction', 'forecast', 'future', 'trend', 'pattern'])) {
+      capabilities.push('predictive_analysis');
+    }
+    if (fuzzyMatch(lowerText, ['optimization', 'efficiency', 'performance', 'improvement'])) {
+      capabilities.push('optimization');
+    }
+    if (fuzzyMatch(lowerText, ['automation', 'workflow', 'process', 'streamline'])) {
+      capabilities.push('automation');
+    }
+    if (fuzzyMatch(lowerText, ['integration', 'connect', 'interface', 'api', 'system'])) {
+      capabilities.push('integration');
+    }
+
+    return [...new Set(capabilities)]; // Remove duplicates
+  };
+
+  // Enhanced Intent Classification with AI Intelligence
+  const classifyIntent = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    // AI-Enhanced Intent Detection
+    if (fuzzyMatch(lowerText, ['what', 'wat', 'wut'])) {
+      if (fuzzyMatch(lowerText, ['difference', 'compare', 'contrast'])) return 'comparison';
+      if (fuzzyMatch(lowerText, ['meaning', 'definition', 'explain'])) return 'definition';
+      if (fuzzyMatch(lowerText, ['purpose', 'use', 'function'])) return 'purpose';
+      return 'information_request';
+    }
+    
+    if (fuzzyMatch(lowerText, ['how', 'howw', 'ho'])) {
+      if (fuzzyMatch(lowerText, ['to', 'make', 'create', 'build'])) return 'instruction';
+      if (fuzzyMatch(lowerText, ['work', 'function', 'operate'])) return 'explanation';
+      if (fuzzyMatch(lowerText, ['solve', 'fix', 'resolve'])) return 'problem_solving';
+      return 'process_request';
+    }
+    
+    if (fuzzyMatch(lowerText, ['why', 'whyy', 'wy'])) return 'reasoning';
+    if (fuzzyMatch(lowerText, ['can', 'could', 'would', 'should'])) return 'advice';
+    if (fuzzyMatch(lowerText, ['help', 'assist', 'support'])) return 'assistance';
+    if (fuzzyMatch(lowerText, ['create', 'design', 'invent'])) return 'creation';
+    if (fuzzyMatch(lowerText, ['analyze', 'examine', 'evaluate'])) return 'analysis';
+    
+    return 'general_inquiry';
+  };
+
+  // Enhanced Specificity Analysis
+  const analyzeSpecificity = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    const specificIndicators = ['specific', 'exact', 'precise', 'detailed', 'step by step', 'example', 'instance', 'particular'];
+    const generalIndicators = ['general', 'overview', 'summary', 'basics', 'intro', 'beginner', 'basic'];
+    
+    const specificCount = specificIndicators.filter(indicator => lowerText.includes(indicator)).length;
+    const generalCount = generalIndicators.filter(indicator => lowerText.includes(indicator)).length;
+    
+    if (specificCount > generalCount) return 'high';
+    if (generalCount > specificCount) return 'low';
+    return 'medium';
+  };
+
+  // Enhanced Emotional Tone Analysis
+  const analyzeEmotionalTone = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    const positiveWords = ['happy', 'excited', 'great', 'wonderful', 'amazing', 'love', 'like', 'interested', 'curious', 'enthusiastic'];
+    const negativeWords = ['sad', 'angry', 'frustrated', 'worried', 'hate', 'terrible', 'bad', 'confused', 'stuck', 'annoyed'];
+    const urgentWords = ['urgent', 'asap', 'quick', 'emergency', 'immediate', 'now', 'deadline', 'important', 'critical'];
+    
+    const words = lowerText.split(' ');
+    const positiveCount = words.filter(word => positiveWords.includes(word)).length;
+    const negativeCount = words.filter(word => negativeWords.includes(word)).length;
+    const urgentCount = words.filter(word => urgentWords.includes(word)).length;
+    
+    if (urgentCount > 0) return 'urgent';
+    if (positiveCount > negativeCount) return 'positive';
+    if (negativeCount > positiveCount) return 'negative';
+    return 'neutral';
+  };
+
+  // Enhanced Urgency Analysis
+  const analyzeUrgency = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    const urgentIndicators = ['urgent', 'asap', 'quick', 'emergency', 'immediate', 'now', 'deadline', 'important', 'critical', 'fast'];
+    const urgentCount = urgentIndicators.filter(indicator => lowerText.includes(indicator)).length;
+    
+    if (urgentCount > 0) return 'high';
+    return 'normal';
+  };
+
+  // Enhanced Spelling Error Detection
+  const detectSpellingErrors = (text) => {
+    const commonErrors = {
+      'wat': 'what',
+      'wut': 'what',
+      'howw': 'how',
+      'ho': 'how',
+      'whyy': 'why',
+      'wy': 'why',
+      'tecnology': 'technology',
+      'artifical': 'artificial',
+      'inteligence': 'intelligence',
+      'mashine': 'machine',
+      'progamming': 'programming',
+      'databse': 'database',
+      'netwrok': 'network',
+      'secuity': 'security',
+      'studdy': 'study',
+      'reserch': 'research',
+      'desin': 'design',
+      'diffrence': 'difference',
+      'compair': 'compare',
+      'defin': 'define',
+      'purpos': 'purpose',
+      'creat': 'create',
+      'buildd': 'build',
+      'functon': 'function',
+      'solv': 'solve',
+      'cann': 'can',
+      'cn': 'can',
+      'shuld': 'should',
+      'shd': 'should',
+      'cud': 'could',
+      'cd': 'could'
+    };
+    
+    const words = text.split(' ');
+    const errors = [];
+    
+    words.forEach((word, index) => {
+      const lowerWord = word.toLowerCase();
+      if (commonErrors[lowerWord]) {
+        errors.push({
+          original: word,
+          corrected: commonErrors[lowerWord],
+          position: index
+        });
+      }
+    });
+    
+    return errors;
+  };
+
+
+
+  // Enhanced AI Intelligence System
+  const analyzeQuestionIntelligence = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    // Advanced Question Type Classification
+    const questionTypes = {
+      factual: ['what is', 'who is', 'when', 'where', 'how many', 'how much', 'which'],
+      analytical: ['why', 'how does', 'explain', 'analyze', 'compare', 'contrast', 'evaluate'],
+      creative: ['imagine', 'create', 'design', 'invent', 'suggest', 'brainstorm', 'come up with'],
+      technical: ['code', 'program', 'algorithm', 'function', 'debug', 'optimize', 'implement'],
+      personal: ['i need', 'help me', 'can you', 'would you', 'please', 'advice', 'recommend'],
+      educational: ['teach', 'learn', 'understand', 'concept', 'theory', 'principle', 'method'],
+      problem_solving: ['solve', 'fix', 'resolve', 'troubleshoot', 'issue', 'problem', 'error'],
+      strategic: ['plan', 'strategy', 'approach', 'methodology', 'framework', 'roadmap'],
+      research: ['research', 'study', 'investigate', 'explore', 'find', 'discover', 'examine']
+    };
+
+    let detectedTypes = [];
+    for (const [type, keywords] of Object.entries(questionTypes)) {
+      if (keywords.some(keyword => lowerText.includes(keyword))) {
+        detectedTypes.push(type);
+      }
+    }
+
+    // Context and Intent Analysis
+    const context = {
+      urgency: lowerText.includes('urgent') || lowerText.includes('asap') || lowerText.includes('quick') ? 'high' : 'normal',
+      complexity: lowerText.includes('complex') || lowerText.includes('advanced') || lowerText.includes('detailed') ? 'high' : 'normal',
+      domain: lowerText.includes('tech') || lowerText.includes('code') ? 'technical' :
+              lowerText.includes('business') || lowerText.includes('strategy') ? 'business' :
+              lowerText.includes('creative') || lowerText.includes('art') ? 'creative' : 'general',
+      tone: lowerText.includes('please') || lowerText.includes('help') ? 'polite' :
+            lowerText.includes('urgent') || lowerText.includes('asap') ? 'urgent' : 'neutral'
+    };
+
+    return { detectedTypes, context };
+  };
+
+  // Simple and Direct Response Generation System
+  const generateIntelligentResponse = (userInput, analysis) => {
+    const { detectedTypes, context } = analysis;
+    const complexity = analyzeComplexity(userInput);
+    
+    // Generate a simple, direct response based on the question type
+    let response = "";
+    
+    // Simple response based on question type
+    if (detectedTypes.includes('factual')) {
+      response = "I'll provide you with accurate, factual information about your question.";
+    } else if (detectedTypes.includes('analytical')) {
+      response = "I'll analyze this topic and provide you with clear insights.";
+    } else if (detectedTypes.includes('creative')) {
+      response = "I'll help you brainstorm creative ideas and solutions.";
+    } else if (detectedTypes.includes('technical')) {
+      response = "I'll provide you with technical guidance and solutions.";
+    } else if (detectedTypes.includes('problem_solving')) {
+      response = "I'll help you solve this problem step by step.";
+    } else {
+      response = "I'll provide you with a helpful answer to your question.";
+    }
+    
+    // Add a brief complexity indicator if needed
+    if (complexity.complexity === 'expert' || complexity.complexity === 'advanced') {
+      response += " This is a complex topic, so I'll provide detailed analysis.";
+    }
+    
+    return response;
+  };
+    
+    // Question Type Specific Response Framework
+    if (detectedTypes.includes('factual')) {
+      response += "**📚 Factual Information Request Detected**\n";
+      response += "I'll provide accurate, well-researched information with proper citations and context.\n\n";
+    }
+    
+    if (detectedTypes.includes('analytical')) {
+      response += "**🔍 Analytical Analysis Mode**\n";
+      response += "I'll break down the topic systematically, providing deep insights and multiple perspectives.\n\n";
+    }
+    
+    if (detectedTypes.includes('creative')) {
+      response += "**💡 Creative Innovation Mode**\n";
+      response += "I'll generate innovative ideas, creative solutions, and out-of-the-box thinking.\n\n";
+    }
+    
+    if (detectedTypes.includes('technical')) {
+      response += "**⚙️ Technical Expertise Mode**\n";
+      response += "I'll provide detailed technical solutions with code examples and best practices.\n\n";
+    }
+    
+    if (detectedTypes.includes('problem_solving')) {
+      response += "**🛠️ Problem-Solving Framework Activated**\n";
+      response += "I'll use systematic problem-solving methodologies to address your issue.\n\n";
+    }
+    
+    // Multi-Step Reasoning Process
+    const reasoningSteps = generateReasoningSteps(userInput, complexity.complexity);
+    if (complexity.complexity !== 'basic') {
+      response += "**📋 Multi-Step Reasoning Process**:\n";
+      reasoningSteps.forEach((step, index) => {
+        response += `${step}\n`;
+      });
+      response += "\n";
+    }
+    
+    // Context-Aware Response Generation
+    if (context.urgency === 'high') {
+      response += "**⚡ High Priority Request Detected**\n";
+      response += "I'll provide a concise, actionable response with immediate next steps.\n\n";
+    }
+    
+    if (context.tone === 'polite') {
+      response += "**🤝 Polite Request Acknowledged**\n";
+      response += "I appreciate your courteous approach and will provide the most helpful response possible.\n\n";
+    }
+    
+    // Domain-Specific Expertise
+    if (context.domain === 'technical') {
+      response += "**💻 Technical Expertise Applied**\n";
+      response += "I'll leverage my technical knowledge to provide precise, implementable solutions.\n\n";
+    }
+    
+    // Advanced Analysis Section
+    response += "**🧠 Advanced AI Analysis**:\n";
+    
+    if (detectedTypes.includes('factual')) {
+      response += "• **Information Verification**: Cross-referencing multiple reliable sources\n";
+      response += "• **Context Analysis**: Understanding the broader implications\n";
+      response += "• **Accuracy Assessment**: Ensuring factual correctness\n";
+    }
+    
+    if (detectedTypes.includes('analytical')) {
+      response += "• **Critical Analysis**: Examining multiple perspectives and viewpoints\n";
+      response += "• **Pattern Recognition**: Identifying underlying trends and connections\n";
+      response += "• **Impact Assessment**: Evaluating consequences and implications\n";
+    }
+    
+    if (detectedTypes.includes('creative')) {
+      response += "• **Innovation Framework**: Applying creative thinking methodologies\n";
+      response += "• **Idea Generation**: Brainstorming multiple creative solutions\n";
+      response += "• **Feasibility Analysis**: Assessing practical implementation\n";
+    }
+    
+    response += "\n";
+    
+    // Capability Indicators
+    response += "**🎯 Active AI Capabilities**:\n";
+    const capabilities = detectTaskCapabilities(userInput);
+    capabilities.forEach(capability => {
+      const emoji = {
+        'research': '🔬',
+        'analysis': '📊',
+        'problem_solving': '🛠️',
+        'creative_thinking': '💡',
+        'technical_expertise': '⚙️',
+        'strategic_planning': '🎯',
+        'communication': '💬',
+        'learning': '📚',
+        'system_design': '🏗️',
+        'statistical_analysis': '📈',
+        'curriculum_design': '📋',
+        'root_cause_analysis': '🔍',
+        'innovation': '🚀',
+        'strategic_thinking': '🧭',
+        'decision_making': '⚖️',
+        'user_experience': '👥'
+      }[capability] || '✨';
+      response += `${emoji} ${capability.replace('_', ' ')}\n`;
+    });
+    
+    response += "\n";
+    
+    // Intelligent Response Generation
+    response += "**🤖 AI-Generated Response**:\n";
+    
+    // Generate contextually appropriate response based on question type
+    if (detectedTypes.includes('factual')) {
+      response += "Based on my analysis of your factual question, I'll provide comprehensive information with proper context and verification.\n\n";
+    } else if (detectedTypes.includes('analytical')) {
+      response += "Through systematic analysis, I'll break down the topic into key components and provide deep insights with supporting evidence.\n\n";
+    } else if (detectedTypes.includes('creative')) {
+      response += "Using creative thinking frameworks, I'll generate innovative ideas and solutions that address your needs.\n\n";
+    } else if (detectedTypes.includes('technical')) {
+      response += "Applying technical expertise, I'll provide detailed solutions with code examples and implementation guidance.\n\n";
+    } else if (detectedTypes.includes('problem_solving')) {
+      response += "Following systematic problem-solving methodologies, I'll identify root causes and provide actionable solutions.\n\n";
+    } else {
+      response += "I'll provide a comprehensive, intelligent response tailored to your specific needs and context.\n\n";
+    }
+    
+    // Expert-Level Recommendations
+    if (complexity.complexity === 'expert' || complexity.complexity === 'advanced') {
+      response += "**🎓 Expert-Level Recommendations**:\n";
+      response += "• **Best Practices**: Industry-standard approaches and methodologies\n";
+      response += "• **Risk Assessment**: Potential challenges and mitigation strategies\n";
+      response += "• **Future-Proofing**: Long-term considerations and scalability\n";
+      response += "• **Performance Optimization**: Efficiency and effectiveness improvements\n";
+      response += "• **Innovation Opportunities**: Cutting-edge solutions and emerging trends\n\n";
+    }
+    
+    // Follow-up Suggestions
+    response += "**💡 Intelligent Follow-up Suggestions**:\n";
+    if (detectedTypes.includes('factual')) {
+      response += "• Would you like me to provide more detailed information on any specific aspect?\n";
+      response += "• Should I explore related topics or recent developments?\n";
+    } else if (detectedTypes.includes('analytical')) {
+      response += "• Would you like me to analyze this from a different perspective?\n";
+      response += "• Should I provide a comparative analysis with similar cases?\n";
+    } else if (detectedTypes.includes('creative')) {
+      response += "• Would you like me to explore alternative creative approaches?\n";
+      response += "• Should I provide implementation strategies for the ideas?\n";
+    } else if (detectedTypes.includes('technical')) {
+      response += "• Would you like me to provide code examples or implementation details?\n";
+      response += "• Should I explain the technical concepts in more detail?\n";
+    } else {
+      response += "• Would you like me to elaborate on any specific aspect?\n";
+      response += "• Should I provide additional resources or references?\n";
+    }
+    
+    response += "\n**🎯 Next Steps**:\n";
+    response += "I'm ready to provide you with the most intelligent, contextually appropriate response. Please proceed with your question, and I'll leverage my advanced AI capabilities to give you the best possible answer.\n\n";
+    
+    response += "**🔮 AI Confidence Level**: High - I'm equipped with advanced reasoning, comprehensive knowledge, and contextual understanding to provide you with intelligent, accurate, and helpful responses.";
+    
+    return response;
+  };
+
+  // Enhanced Question Analysis
+  const analyzeQuestion = (userInput) => {
+    try {
+      const lowerInput = userInput.toLowerCase();
+      
+      // Enhanced spelling error detection and correction
+      const spellingErrors = detectSpellingErrors(userInput) || [];
+      const correctedInput = spellingErrors.length > 0 ? correctSpelling(userInput, spellingErrors) : userInput;
+      
+      // Advanced intent classification
+      const intent = classifyIntent(lowerInput) || 'general_inquiry';
+      
+      // Enhanced specificity analysis
+      const specificity = analyzeSpecificity(lowerInput) || 'medium';
+      
+      // Emotional and urgency analysis
+      const emotionalTone = analyzeEmotionalTone(lowerInput) || 'neutral';
+      const urgency = analyzeUrgency(lowerInput) || 'normal';
+      
+      // AI Intelligence Analysis
+      const intelligenceAnalysis = analyzeQuestionIntelligence(userInput) || { detectedTypes: ['general'], context: {} };
+      
+      // Complexity analysis
+      const complexity = analyzeComplexity(userInput) || { complexity: 'basic', reasoningDepth: 1, analysisSteps: [] };
+      
+      // Task capability detection
+      const capabilities = detectTaskCapabilities(userInput) || [];
+      
+      return {
+        original: userInput,
+        corrected: correctedInput,
+        intent,
+        specificity,
+        emotionalTone,
+        urgency,
+        intelligenceAnalysis,
+        complexity: complexity.complexity,
+        reasoningDepth: complexity.reasoningDepth,
+        analysisSteps: complexity.analysisSteps,
+        capabilities,
+        spellingErrors: spellingErrors.length,
+        multiStepReasoning: complexity.complexity !== 'basic',
+        advancedAnalysis: complexity.complexity === 'expert' || complexity.complexity === 'advanced',
+        contextAware: true,
+        personalized: true
+      };
+    } catch (error) {
+      console.error('Error in analyzeQuestion:', error);
+      // Return a safe fallback analysis
+      return {
+        original: userInput,
+        corrected: userInput,
+        intent: 'general_inquiry',
+        specificity: 'medium',
+        emotionalTone: 'neutral',
+        urgency: 'normal',
+        intelligenceAnalysis: { detectedTypes: ['general'], context: {} },
+        complexity: 'basic',
+        reasoningDepth: 1,
+        analysisSteps: ['Basic Analysis'],
+        capabilities: [],
+        spellingErrors: 0,
+        multiStepReasoning: false,
+        advancedAnalysis: false,
+        contextAware: true,
+        personalized: true
+      };
+    }
+  };
+
+  // Simple and Direct Response Generation
+  const generateAdvancedResponse = (userInput, analysis) => {
+    try {
+      // Ensure analysis object exists
+      if (!analysis || typeof analysis !== 'object') {
+        return "I apologize, but I encountered an error while processing your request. Please try again.";
+      }
+
+      // Generate actual answers based on the question
+      const question = userInput.toLowerCase();
+      
+      // Simple answer system
+      if (question.includes('what is artificial intelligence') || question.includes('what is ai')) {
+        return "Artificial Intelligence (AI) is technology that enables computers to perform tasks that typically require human intelligence, such as learning, reasoning, problem-solving, and understanding language.";
+      } else if (question.includes('how are you') || question.includes('how do you feel')) {
+        return "I'm functioning well and ready to help you with any questions or tasks you have!";
+      } else if (question.includes('what can you do') || question.includes('what are your capabilities')) {
+        return "I can help you with various tasks including answering questions, solving problems, providing explanations, brainstorming ideas, and offering technical guidance.";
+      } else if (question.includes('hello') || question.includes('hi') || question.includes('hey')) {
+        return "Hello! I'm MOTTO, your AI assistant. How can I help you today?";
+      } else if (question.includes('thank you') || question.includes('thanks')) {
+        return "You're welcome! I'm happy to help. Is there anything else you'd like to know?";
+      } else if (question.includes('what is your name')) {
+        return "My name is MOTTO. I'm an AI assistant designed to help you with various tasks and questions.";
+      } else if (question.includes('who created you') || question.includes('who made you')) {
+        return "I'm an AI assistant created to help users with various tasks and provide intelligent responses to questions.";
+      } else {
+        // For other questions, provide a simple acknowledgment
+        const intent = safeValue(analysis.intent, 'general_inquiry');
+        
+        if (intent.includes('factual') || intent.includes('what') || intent.includes('who') || intent.includes('when') || intent.includes('where')) {
+          return "I'll provide you with accurate information about that.";
+        } else if (intent.includes('how') || intent.includes('explain') || intent.includes('analyze')) {
+          return "I'll explain this step by step.";
+        } else if (intent.includes('creative') || intent.includes('ideas') || intent.includes('brainstorm')) {
+          return "I'll help you brainstorm some creative ideas.";
+        } else if (intent.includes('technical') || intent.includes('code') || intent.includes('programming')) {
+          return "I'll provide you with technical guidance.";
+        } else if (intent.includes('problem') || intent.includes('solve') || intent.includes('help')) {
+          return "I'll help you solve this problem.";
+        } else {
+          return "I'll provide you with a helpful answer to your question.";
+        }
+      }
+    } catch (error) {
+      console.error('Error in generateAdvancedResponse:', error);
+      return "I apologize, but I encountered an error while processing your request. Please try again.";
+    }
+  };
+
+  // Enhanced conversation memory and context with advanced tracking
+  const updateConversationContext = (userInput, analysis) => {
+    try {
+      // Ensure analysis object exists and has required properties
+      if (!analysis || typeof analysis !== 'object') {
+        console.warn('Invalid analysis object provided to updateConversationContext');
+        return;
+      }
+
+      setConversationContext(prev => {
+        try {
+          // Ensure prev is an object
+          const safePrev = prev && typeof prev === 'object' ? prev : {};
+          
+          return {
+            ...safePrev,
+            lastQuestionType: safeValue(analysis.intent, 'general_inquiry'),
+            lastTopic: safeValue(analysis.intent, safePrev.lastTopic),
+            conversationLength: safeNumber(safePrev.conversationLength, 0) + 1,
+            userInterests: [...(safePrev.userInterests || []), safeValue(analysis.intent)],
+            emotionalHistory: [...(safePrev.emotionalHistory || []), safeValue(analysis.emotionalTone)],
+            complexityPreference: safeValue(analysis.complexity),
+            questionPatterns: [...(safePrev.questionPatterns || []), safeValue(analysis.intent)],
+            spellingErrors: safeNumber(analysis.spellingErrors, 0) > 0 ? safeNumber(safePrev.spellingErrors, 0) + 1 : safeNumber(safePrev.spellingErrors, 0),
+            activeCapabilities: analysis.capabilities || [],
+            complexityLevel: safeValue(analysis.complexity),
+            reasoningDepth: safeNumber(analysis.reasoningDepth, 1),
+            taskHistory: [...(safePrev.taskHistory || []), {
+              task: safeValue(analysis.intent),
+              capabilities: analysis.capabilities || [],
+              complexity: safeValue(analysis.complexity),
+              reasoningDepth: safeNumber(analysis.reasoningDepth, 1),
+              timestamp: Date.now()
+            }]
+          };
+        } catch (error) {
+          console.error('Error in setConversationContext:', error);
+          return safePrev || {};
+        }
+      });
+
+      // Safe state updates
+      try {
+        setActiveCapabilities(analysis.capabilities || []);
+      } catch (error) {
+        console.error('Error setting active capabilities:', error);
+        setActiveCapabilities([]);
+      }
+
+      try {
+        setComplexityLevel(safeValue(analysis.complexity, 'advanced'));
+      } catch (error) {
+        console.error('Error setting complexity level:', error);
+        setComplexityLevel('advanced');
+      }
+    } catch (error) {
+      console.error('Error in updateConversationContext:', error);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || isSending) return;
+    
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      text: input.trim()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsSending(true);
+    
+    // Enhanced AI processing with advanced complexity analysis
+    setTimeout(() => {
+      try {
+        // Ensure userMessage.text is valid
+        if (!userMessage.text || typeof userMessage.text !== 'string') {
+          throw new Error('Invalid user message text');
+        }
+        
+        const analysis = analyzeQuestion(userMessage.text);
+        
+        // Ensure analysis object is valid before passing to updateConversationContext
+        if (!analysis || typeof analysis !== 'object') {
+          throw new Error('Invalid analysis object');
+        }
+        
+        // Only call updateConversationContext if analysis is valid
+        try {
+          updateConversationContext(userMessage.text, analysis);
+        } catch (contextError) {
+          console.error('Error updating conversation context:', contextError);
+          // Continue with response generation even if context update fails
+        }
+        
+        const aiResponse = {
+          id: `ai-${Date.now()}`,
+          role: 'assistant',
+          text: generateAdvancedResponse(userMessage.text, analysis)
+        };
+        setMessages(prev => [...prev, aiResponse]);
+      } catch (error) {
+        console.error('Error processing message:', error);
+        // Fallback response in case of error
+        const fallbackResponse = {
+          id: `ai-${Date.now()}`,
+          role: 'assistant',
+          text: "I apologize, but I encountered an error while processing your request. Please try again."
+        };
+        setMessages(prev => [...prev, fallbackResponse]);
+      } finally {
+        setIsSending(false);
+      }
+    }, 3000); // Longer processing time for complex analysis
+  };
+
+  const renderMessage = React.useCallback(({item}) => {
+    const isUser = item.role === 'user';
+    
+    return (
+      <View style={[styles.messageContainer, isUser ? styles.userMessage : styles.aiMessage]}>
+        <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.aiBubble]}>
+          <Text style={[styles.messageText, isUser ? styles.userText : styles.aiText]}>
+            {item.text}
+          </Text>
+        </View>
+      </View>
+    );
+  }, []);
+
+  const keyExtractor = React.useCallback((item) => item.id, []);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0A0E1A" />
+      
+      {/* Enhanced Header with Advanced Complexity Status */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>MOTTO</Text>
+        <View style={styles.statusContainer}>
+          <View style={[styles.statusDot, { backgroundColor: isConnected ? '#00E676' : '#FFB300' }]} />
+          <Text style={styles.statusText}>
+            {isConnected ? 'ADVANCED COMPLEXITY INTELLIGENCE ACTIVE' : 'INITIALIZING...'}
+          </Text>
+        </View>
+        <Text style={styles.intelligenceBadge}>🧠 Advanced Multi-Step Reasoning</Text>
+        
+        {/* Complexity Level Display */}
+        <View style={styles.complexityContainer}>
+          <Text style={styles.complexityTitle}>Complexity Level:</Text>
+          <Text style={[styles.complexityBadge, { 
+            backgroundColor: complexityLevel === 'expert' ? '#FF6B6B' : 
+                           complexityLevel === 'advanced' ? '#4ECDC4' : 
+                           complexityLevel === 'intermediate' ? '#45B7D1' : '#96CEB4'
+          }]}>
+            {complexityLevel.toUpperCase()}
+          </Text>
+        </View>
+        
+        {/* Active Capabilities Display */}
+        {activeCapabilities.length > 0 && (
+          <View style={styles.capabilitiesContainer}>
+            <Text style={styles.capabilitiesTitle}>Active Capabilities:</Text>
+            <View style={styles.capabilitiesList}>
+              {activeCapabilities.map((capability, index) => (
+                <Text key={index} style={styles.capabilityBadge}>
+                  {capability.replace('_', ' ')}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Messages */}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={keyExtractor}
+        style={styles.messagesList}
+        contentContainerStyle={styles.messagesContent}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({animated: true})}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        getItemLayout={(data, index) => ({
+          length: 100, // Approximate height of each message
+          offset: 100 * index,
+          index,
+        })}
+      />
+
+      {/* Enhanced Typing Indicator */}
+      {isSending && (
+        <View style={styles.typingContainer}>
+          <View style={styles.typingBubble}>
+            <Text style={styles.typingText}>MOTTO is performing advanced analysis and multi-step reasoning...</Text>
+            <ActivityIndicator size="small" color="#2196F3" style={styles.typingSpinner} />
+          </View>
+        </View>
+      )}
+
+      {/* Enhanced Input Area */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.inputContainer}
+      >
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.textInput}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Ask MOTTO anything - I'll provide advanced analysis and complex reasoning..."
+            placeholderTextColor="#808898"
+            multiline
+            maxLength={1000}
+            onSubmitEditing={sendMessage}
+          />
+          <TouchableOpacity 
+            style={[styles.sendButton, !input.trim() || isSending ? styles.sendButtonDisabled : null]}
+            onPress={sendMessage}
+            disabled={!input.trim() || isSending}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0A0E1A',
+  },
+  header: {
+    backgroundColor: '#1A1F2E',
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2196F3',
+    alignItems: 'center',
+  },
+  logo: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2196F3',
+    marginBottom: 10,
+    letterSpacing: 2,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  intelligenceBadge: {
+    fontSize: 12,
+    color: '#00E676',
+    fontWeight: '600',
+    backgroundColor: 'rgba(0, 230, 118, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#00E676',
+    marginBottom: 8,
+  },
+  complexityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  complexityTitle: {
+    fontSize: 12,
+    color: '#B0B8C8',
+    marginRight: 8,
+  },
+  complexityBadge: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    textTransform: 'uppercase',
+  },
+  capabilitiesContainer: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  capabilitiesTitle: {
+    fontSize: 12,
+    color: '#B0B8C8',
+    marginBottom: 4,
+  },
+  capabilitiesList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  capabilityBadge: {
+    fontSize: 10,
+    color: '#2196F3',
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2196F3',
+    marginHorizontal: 2,
+    marginVertical: 1,
+    textTransform: 'capitalize',
+  },
+  messagesList: {
+    flex: 1,
+  },
+  messagesContent: {
+    padding: 16,
+    paddingBottom: 20,
+  },
+  messageContainer: {
+    marginBottom: 16,
+  },
+  userMessage: {
+    alignItems: 'flex-end',
+  },
+  aiMessage: {
+    alignItems: 'flex-start',
+  },
+  messageBubble: {
+    maxWidth: '85%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  userBubble: {
+    backgroundColor: '#2196F3',
+    borderColor: '#1976D2',
+  },
+  aiBubble: {
+    backgroundColor: '#2A2F3E',
+    borderColor: '#3A3F4E',
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  userText: {
+    color: '#FFFFFF',
+  },
+  aiText: {
+    color: '#FFFFFF',
+  },
+  typingContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  typingBubble: {
+    backgroundColor: '#2A2F3E',
+    borderColor: '#3A3F4E',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typingText: {
+    color: '#B0B8C8',
+    fontSize: 14,
+    marginRight: 8,
+  },
+  typingSpinner: {
+    marginLeft: 4,
+  },
+  inputContainer: {
+    backgroundColor: '#1A1F2E',
+    borderTopWidth: 1,
+    borderTopColor: '#3A3F4E',
+    padding: 16,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: '#2A2F3E',
+    borderWidth: 1,
+    borderColor: '#3A3F4E',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    maxHeight: 100,
+    marginRight: 12,
+  },
+  sendButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#3A3F4E',
+  },
+  sendButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
+export default App; 

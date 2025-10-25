@@ -1,0 +1,55 @@
+version: "3.1"
+
+stories:
+  - story: translation flow
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: translate_text
+      - action: action_translate_text
+      - action: utter_ask_continue
+
+  - story: reminder flow
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: set_reminder
+      - action: action_set_reminder
+      - action: utter_ask_continue
+
+  - story: app control flow
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: control_app
+      - action: action_control_app
+      - action: utter_ask_continue
+
+  - story: direct translation
+    steps:
+      - intent: translate_text
+      - action: action_translate_text
+      - action: utter_ask_continue
+
+  - story: direct reminder
+    steps:
+      - intent: set_reminder
+      - action: action_set_reminder
+      - action: utter_ask_continue
+
+  - story: direct app control
+    steps:
+      - intent: control_app
+      - action: action_control_app
+      - action: utter_ask_continue
+
+  - story: goodbye flow
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - story: out of scope flow
+    steps:
+      - intent: out_of_scope
+      - action: utter_out_of_scope
+      - action: utter_ask_continue 
