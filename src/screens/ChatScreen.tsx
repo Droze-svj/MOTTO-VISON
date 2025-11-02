@@ -17,6 +17,7 @@ import {
   Modal,
   Animated,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import MasterAIService from '../services/core/MasterAIService';
@@ -49,6 +50,7 @@ const ChatScreen: React.FC = () => {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -90,6 +92,30 @@ const ChatScreen: React.FC = () => {
       }, 100);
     }
   }, [messages]);
+
+  // Refresh chat (pull to refresh)
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    Haptics.light();
+    
+    try {
+      // Reload context and conversation history
+      const contextData = await ContextMemoryService.getContext(userId, '');
+      
+      // Optional: Could reload messages from backend/storage here
+      // For now, just refresh the context
+      
+      // Small delay for UX (feels more responsive)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      Haptics.success();
+    } catch (error) {
+      console.error('Refresh error:', error);
+      Haptics.error();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Delete message
   const handleDeleteMessage = (messageId: string) => {
@@ -349,6 +375,16 @@ What's on your mind?`,
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#4F46E5"
+            colors={['#4F46E5']}
+            title="Pull to refresh..."
+            titleColor="#666"
+          />
+        }
       >
         {messages.map((message) => (
           <MessageBubble
