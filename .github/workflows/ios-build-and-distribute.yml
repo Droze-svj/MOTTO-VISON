@@ -62,7 +62,7 @@ jobs:
             -allowProvisioningUpdates
       
       - name: Upload IPA as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MOTTOVISON-IPA
           path: ios/build/export/*.ipa
