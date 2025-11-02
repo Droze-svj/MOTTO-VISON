@@ -18,6 +18,7 @@ import {
   Animated,
   Alert,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import MasterAIService from '../services/core/MasterAIService';
 import MultilingualService from '../services/core/MultilingualService';
 import ContextMemoryService from '../services/core/ContextMemoryService';
@@ -25,6 +26,7 @@ import VoiceIntegrationService from '../services/core/VoiceIntegrationService';
 import { useMultilingual } from '../hooks/useMultilingual';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { FriendlyErrorMessages } from '../utils/errorMessages';
+import { Haptics } from '../utils/haptics';
 
 interface Message {
   id: string;
@@ -89,9 +91,62 @@ const ChatScreen: React.FC = () => {
     }
   }, [messages]);
 
+  // Delete message
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    Haptics.success();
+  };
+
+  // Copy message
+  const handleCopyMessage = (message: Message) => {
+    Clipboard.setString(message.content);
+    Haptics.success();
+    Alert.alert('Copied!', 'Message copied to clipboard', [{ text: 'OK' }], { cancelable: true });
+  };
+
+  // Long press message menu
+  const handleMessageLongPress = (message: Message) => {
+    Haptics.medium();
+    
+    const isUserMessage = message.role === 'user';
+    const buttons = [
+      {
+        text: 'Copy',
+        onPress: () => handleCopyMessage(message),
+      },
+    ];
+
+    // Add delete for user messages
+    if (isUserMessage) {
+      buttons.push({
+        text: 'Delete',
+        style: 'destructive' as const,
+        onPress: () => {
+          Alert.alert(
+            'Delete Message',
+            'Are you sure you want to delete this message?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => handleDeleteMessage(message.id),
+              },
+            ]
+          );
+        },
+      });
+    }
+
+    buttons.push({ text: 'Cancel', style: 'cancel' as const });
+    Alert.alert('Message Options', '', buttons);
+  };
+
   // Send message
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
+
+    Haptics.light(); // Haptic feedback when sending
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -300,6 +355,7 @@ What's on your mind?`,
             key={message.id}
             message={message}
             isUser={message.role === 'user'}
+            onLongPress={() => handleMessageLongPress(message)}
           />
         ))}
 
@@ -408,11 +464,28 @@ What's on your mind?`,
 };
 
 // Message Bubble Component
-const MessageBubble: React.FC<{ message: Message; isUser: boolean }> = ({
+const MessageBubble: React.FC<{ 
+  message: Message; 
+  isUser: boolean;
+  onLongPress?: () => void;
+}> = ({
   message,
   isUser,
+  onLongPress,
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+
+  const handlePress = () => {
+    setShowDetails(!showDetails);
+  };
+
+  const handleLongPressInternal = () => {
+    if (onLongPress) {
+      onLongPress();
+    } else {
+      setShowDetails(!showDetails);
+    }
+  };
 
   return (
     <View style={[styles.messageBubbleContainer, isUser && styles.messageBubbleContainerUser]}>
@@ -421,7 +494,8 @@ const MessageBubble: React.FC<{ message: Message; isUser: boolean }> = ({
           styles.messageBubble,
           isUser ? styles.messageBubbleUser : styles.messageBubbleAssistant
         ]}
-        onLongPress={() => setShowDetails(!showDetails)}
+        onPress={handlePress}
+        onLongPress={handleLongPressInternal}
         activeOpacity={0.8}
       >
         <Text style={[

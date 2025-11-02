@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { Haptics } from '../utils/haptics';
 import { Message } from '../types';
 
 interface MessageBubbleProps {
   message: Message;
   onLongPress?: (message: Message) => void;
+  onDelete?: (messageId: string) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onLongPress }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onLongPress, onDelete }) => {
   const isUser = message.role === 'user';
 
   // Trigger subtle haptic when AI message appears
@@ -20,7 +22,53 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onLongPre
 
   const handleLongPress = () => {
     Haptics.medium();
-    onLongPress?.(message);
+    
+    // Show action menu
+    const buttons = [
+      {
+        text: 'Copy',
+        onPress: () => {
+          Clipboard.setString(message.text);
+          Haptics.success();
+          // Optional: Show toast notification
+          Alert.alert('Copied!', 'Message copied to clipboard', [{ text: 'OK' }], { cancelable: true });
+        },
+      },
+    ];
+
+    // Add delete option for user messages
+    if (isUser && onDelete) {
+      buttons.push({
+        text: 'Delete',
+        style: 'destructive' as const,
+        onPress: () => {
+          Alert.alert(
+            'Delete Message',
+            'Are you sure you want to delete this message?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => {
+                  Haptics.medium();
+                  onDelete(message.id);
+                },
+              },
+            ]
+          );
+        },
+      });
+    }
+
+    buttons.push({ text: 'Cancel', style: 'cancel' as const });
+
+    // Trigger custom handler if provided, otherwise show default menu
+    if (onLongPress) {
+      onLongPress(message);
+    } else {
+      Alert.alert('Message Options', '', buttons);
+    }
   };
 
   return (
