@@ -52,6 +52,8 @@ const ChatScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -131,6 +133,35 @@ const ChatScreen: React.FC = () => {
     Alert.alert('Copied!', 'Message copied to clipboard', [{ text: 'OK' }], { cancelable: true });
   };
 
+  // Clear all chat messages
+  const handleClearChat = () => {
+    Haptics.medium();
+    Alert.alert(
+      'Clear Chat',
+      'Delete all messages and start fresh?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            setMessages([]);
+            await ContextMemoryService.clearContext(userId);
+            Haptics.success();
+            // Show welcome message after clearing
+            const welcomeMessage: Message = {
+              id: 'welcome-' + Date.now(),
+              role: 'assistant',
+              content: '👋 Chat cleared! How can I help you?',
+              timestamp: Date.now(),
+            };
+            setMessages([welcomeMessage]);
+          },
+        },
+      ]
+    );
+  };
+
   // Long press message menu
   const handleMessageLongPress = (message: Message) => {
     Haptics.medium();
@@ -169,16 +200,35 @@ const ChatScreen: React.FC = () => {
     Alert.alert('Message Options', '', buttons);
   };
 
+  // Retry failed message
+  const handleRetry = async () => {
+    if (!failedMessage) return;
+    
+    Haptics.light();
+    setInputText(failedMessage);
+    setFailedMessage(null);
+    setError(null);
+    setRetryCount(0);
+    
+    // Automatically send the retry
+    setTimeout(() => {
+      if (failedMessage) {
+        handleSend();
+      }
+    }, 100);
+  };
+
   // Send message
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
 
     Haptics.light(); // Haptic feedback when sending
 
+    const messageText = inputText.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputText.trim(),
+      content: messageText,
       timestamp: Date.now(),
     };
 
@@ -188,6 +238,7 @@ const ChatScreen: React.FC = () => {
     setError(null);
 
     const startTime = Date.now();
+    const maxRetries = 2;
 
     try {
       // Add to context memory
@@ -224,6 +275,10 @@ const ChatScreen: React.FC = () => {
 
       // Add assistant response to context memory
       await ContextMemoryService.addMessage(userId, 'assistant', assistantMessage.content);
+      
+      // Clear retry state on success
+      setFailedMessage(null);
+      setRetryCount(0);
 
     } catch (err) {
       console.error('Chat error:', err);
@@ -231,15 +286,33 @@ const ChatScreen: React.FC = () => {
       // Use friendly error message
       const friendlyError = FriendlyErrorMessages.getFriendlyMessage(err, 'chat');
       setError(friendlyError);
+      
+      // Save failed message for retry
+      setFailedMessage(messageText);
+
+      // Auto-retry once if first failure
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        console.log(`Auto-retrying (attempt ${retryCount + 1}/${maxRetries})...`);
+        
+        // Wait a moment then retry
+        setTimeout(async () => {
+          setIsLoading(false);
+          setInputText(messageText);
+          setTimeout(() => handleSend(), 200);
+        }, 1000);
+        return;
+      }
 
       // Add friendly error message to chat
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: friendlyError,
+        content: friendlyError + '\n\n💡 Tap "Retry" below to try again.',
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMessage]);
+      Haptics.error();
     } finally {
       setIsLoading(false);
       setLoadingPhase('');
@@ -357,14 +430,35 @@ What's on your mind?`,
           >
             <Text style={styles.iconButtonText}>🌍</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleClearChat}
+          >
+            <Text style={styles.iconButtonText}>🗑️</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Error Banner */}
+      {/* Error Banner with Retry */}
       {error && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>⚠️ {error}</Text>
-          <TouchableOpacity onPress={() => setError(null)}>
+          <View style={styles.errorContent}>
+            <Text style={styles.errorText}>⚠️ {error}</Text>
+            {failedMessage && (
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={handleRetry}
+              >
+                <Text style={styles.retryButtonText}>🔄 Retry</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity onPress={() => {
+            setError(null);
+            setFailedMessage(null);
+            setRetryCount(0);
+          }}>
             <Text style={styles.errorClose}>✕</Text>
           </TouchableOpacity>
         </View>
@@ -387,6 +481,40 @@ What's on your mind?`,
           />
         }
       >
+        {/* Empty State */}
+        {messages.length === 0 && !isLoading && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>💭</Text>
+            <Text style={styles.emptyTitle}>Start a Conversation</Text>
+            <Text style={styles.emptySubtitle}>
+              I'm MOTTO, your intelligent AI assistant.{'\n'}Ask me anything!
+            </Text>
+            
+            {/* Suggested Prompts */}
+            <View style={styles.suggestions}>
+              <Text style={styles.suggestionsLabel}>Try asking:</Text>
+              {[
+                "Tell me a joke",
+                "Help me learn something new",
+                "What can you help me with?",
+                "Explain a concept to me"
+              ].map((prompt, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.suggestionChip}
+                  onPress={() => {
+                    Haptics.light();
+                    setInputText(prompt);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  <Text style={styles.suggestionText}>💡 {prompt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+        
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -650,16 +778,84 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  errorContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   errorText: {
     color: '#991B1B',
     fontSize: 14,
     flex: 1,
+  },
+  retryButton: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
   errorClose: {
     color: '#991B1B',
     fontSize: 18,
     fontWeight: 'bold',
     padding: 4,
+  },
+
+  // Empty State
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  suggestions: {
+    width: '100%',
+    gap: 12,
+  },
+  suggestionsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  suggestionChip: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  suggestionText: {
+    fontSize: 15,
+    color: '#374151',
+    textAlign: 'center',
   },
 
   // Messages
