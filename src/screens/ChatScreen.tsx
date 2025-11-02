@@ -28,6 +28,7 @@ import { useMultilingual } from '../hooks/useMultilingual';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { FriendlyErrorMessages } from '../utils/errorMessages';
 import { Haptics } from '../utils/haptics';
+import { formatTimeAgo } from '../utils/formatTime';
 
 interface Message {
   id: string;
@@ -541,6 +542,14 @@ const MessageBubble: React.FC<{
           {message.content}
         </Text>
 
+        {/* Timestamp - Always visible */}
+        <Text style={[
+          styles.timestamp,
+          isUser && styles.timestampUser
+        ]}>
+          {formatTimeAgo(message.timestamp)}
+        </Text>
+
         {/* Metadata */}
         {!isUser && (showDetails || message.sources) && (
           <View style={styles.messageMetadata}>
@@ -570,17 +579,6 @@ const MessageBubble: React.FC<{
             )}
           </View>
         )}
-
-        {/* Timestamp */}
-        <Text style={[
-          styles.timestamp,
-          isUser && styles.timestampUser
-        ]}>
-          {new Date(message.timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </Text>
       </TouchableOpacity>
     </View>
   );

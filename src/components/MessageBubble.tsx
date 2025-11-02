@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { Haptics } from '../utils/haptics';
+import { formatTimeAgo } from '../utils/formatTime';
 import { Message } from '../types';
 
 interface MessageBubbleProps {
@@ -81,6 +82,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onLongPre
         <Text style={[styles.text, isUser ? styles.userText : styles.assistantText]}>
           {message.text}
         </Text>
+        
+        {/* Timestamp */}
+        {message.timestamp && (
+          <Text style={[styles.timestamp, isUser && styles.timestampUser]}>
+            {formatTimeAgo(message.timestamp)}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -120,6 +128,15 @@ const styles = StyleSheet.create({
   },
   assistantText: {
     color: '#000000',
+  },
+  timestamp: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 4,
+    opacity: 0.8,
+  },
+  timestampUser: {
+    color: 'rgba(255, 255, 255, 0.8)',
   },
 });
 
