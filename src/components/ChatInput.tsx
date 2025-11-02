@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { Haptics } from '../utils/haptics';
 
 interface ChatInputProps {
   value: string;
@@ -18,6 +19,8 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
 }) => {
   const handleSend = () => {
     if (value.trim() && !disabled) {
+      // Trigger haptic feedback when sending message
+      Haptics.light();
       onSend();
     }
   };

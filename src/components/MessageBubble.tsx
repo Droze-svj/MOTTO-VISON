@@ -1,22 +1,40 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Haptics } from '../utils/haptics';
 import { Message } from '../types';
 
 interface MessageBubbleProps {
   message: Message;
+  onLongPress?: (message: Message) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onLongPress }) => {
   const isUser = message.role === 'user';
 
+  // Trigger subtle haptic when AI message appears
+  useEffect(() => {
+    if (!isUser) {
+      Haptics.light();
+    }
+  }, [isUser]);
+
+  const handleLongPress = () => {
+    Haptics.medium();
+    onLongPress?.(message);
+  };
+
   return (
-    <View style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}>
+    <TouchableOpacity
+      onLongPress={handleLongPress}
+      activeOpacity={0.7}
+      style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}
+    >
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
         <Text style={[styles.text, isUser ? styles.userText : styles.assistantText]}>
           {message.text}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
