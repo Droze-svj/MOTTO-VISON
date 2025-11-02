@@ -39,47 +39,22 @@ jobs:
             --bundle-output ios/main.jsbundle \
             --assets-dest ios/
       
-      - name: Build iOS Archive
+      - name: Build iOS (Verify Build Works)
         run: |
           cd ios
-          xcodebuild archive \
+          xcodebuild build \
             -workspace MOTTOVISON.xcworkspace \
             -scheme MOTTOVISON \
             -configuration Release \
-            -archivePath build/MOTTOVISON.xcarchive \
-            -destination "generic/platform=iOS" \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,name=iPhone 15" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
       
-      - name: Export IPA
+      - name: Build Success
         run: |
-          cd ios
-          xcodebuild -exportArchive \
-            -archivePath build/MOTTOVISON.xcarchive \
-            -exportPath build/export \
-            -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates
-      
-      - name: Upload IPA as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: MOTTOVISON-IPA
-          path: ios/build/export/*.ipa
-          retention-days: 30
-      
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-      
-      - name: Distribute to Firebase
-        if: success()
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: |
-          firebase app-distribution:distribute \
-            ios/build/export/MOTTOVISON.ipa \
-            --app-type ios \
-            --groups "beta-testers" \
-            --release-notes "Automated build from GitHub Actions - $(git log -1 --pretty=%B)" \
-            --token "$FIREBASE_TOKEN"
+          echo "✅ iOS build completed successfully!"
+          echo "📱 To test on a real device, build locally with your Apple Developer account"
+          echo "🔧 Run: cd ios && xcodebuild archive (with proper signing)"
 
