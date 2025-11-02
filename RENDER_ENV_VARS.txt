@@ -1,0 +1,17 @@
+Copy these environment variables to Render dashboard:
+
+SECRET_KEY=DkGe3zMlJ5PgCADFCRE_gWPr6znPD73JA0554DWVq_4
+
+JWT_SECRET_KEY=HoC2v46Y_zYJ9CuDkUpi5fUrNxkfVknUe5SVLBHzqKQ
+
+DATABASE_URL=postgresql://motto_user:ywGjhDrpBONdThwr8aAlZLAySP4VAd3t@dpg-d42q98odl3ps73cm045g-a/motto
+
+ENVIRONMENT=production
+
+API_VERSION=v1
+
+PYTHON_VERSION=3.11
+
+ALLOWED_ORIGINS=*
+
+CORS_ORIGINS=*

@@ -145,6 +145,28 @@ export class UltraPersonalizationService {
   // MULTI-DIMENSIONAL ANALYSIS
   // ============================================
 
+  /**
+   * Analyzes user interaction across multiple dimensions to build comprehensive profile
+   * 
+   * Performs 5-dimensional analysis:
+   * - Cognitive patterns (thinking speed, processing depth, abstraction preference)
+   * - Personality traits (openness, conscientiousness, extraversion, curiosity, persistence)
+   * - Motivation (primary drive, goal orientation, challenge preference, growth mindset)
+   * - Temporal patterns (peak hours, morning/night person, weekday/weekend preferences)
+   * - Emotional state (emotional range, positivity ratio)
+   * 
+   * @param userId - Unique identifier for the user
+   * @param userInput - The user's input text to analyze
+   * @param timeTaken - Time in milliseconds taken for user to provide input
+   * @param complexity - Complexity score of the interaction (0-10 scale)
+   * 
+   * @throws Will throw if profile creation or saving fails
+   * 
+   * @example
+   * ```typescript
+   * await service.analyzeInteraction('user123', 'How does React work?', 5000, 7);
+   * ```
+   */
   async analyzeInteraction(
     userId: string,
     userInput: string,
@@ -174,6 +196,21 @@ export class UltraPersonalizationService {
     await this.saveUltraProfile(userId);
   }
 
+  /**
+   * Analyzes cognitive patterns from user input
+   * 
+   * Determines:
+   * - Thinking speed: fast (<10s), moderate (10-30s), deliberate (>30s)
+   * - Processing depth: deep (why/explain questions), moderate (long inputs), shallow
+   * - Abstraction preference: abstract (concepts/theories) vs concrete (examples/demos)
+   * 
+   * @param input - User input text
+   * @param timeTaken - Time taken for input (milliseconds)
+   * @param complexity - Complexity score (0-10)
+   * @param profile - User profile to update (modified in place)
+   * 
+   * @internal
+   */
   private analyzeCognitive(input: string, timeTaken: number, complexity: number, profile: UltraProfile): void {
     // Thinking speed
     if (timeTaken < 10000) profile.cognitiveStyle.thinkingSpeed = 'fast';
@@ -321,6 +358,27 @@ export class UltraPersonalizationService {
   // ADAPTIVE RESPONSE GENERATION
   // ============================================
 
+  /**
+   * Adapts response text based on comprehensive user profile
+   * 
+   * Applies 5 layers of adaptation:
+   * 1. Cognitive: Adjusts length, detail, format (visual/verbal, sequential/random)
+   * 2. Personality: Adds creative suggestions, checklists, exploration prompts
+   * 3. Motivation: Tailors to achievement/learning goals, challenge level
+   * 4. Emotional: Adjusts tone, empathy, encouragement level
+   * 5. Expertise: Matches technical depth to user's knowledge level
+   * 
+   * @param userId - User identifier for profile lookup
+   * @param baseResponse - Base response text to adapt
+   * @param context - Additional context object (topic, conversation history, etc.)
+   * 
+   * @returns Adapted response string
+   * 
+   * @example
+   * ```typescript
+   * const adapted = await service.ultraAdapt('user123', 'Here is the answer', { topic: 'React' });
+   * ```
+   */
   async ultraAdapt(
     userId: string,
     baseResponse: string,

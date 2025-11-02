@@ -1,144 +1,68 @@
 /**
  * API Configuration
- * Centralized API endpoints and configuration
+ * Centralized API configuration for different environments
  */
 
-// API Base URLs
-const API_URLS = {
-  development: 'http://localhost:8000',  // Local FastAPI
-  production: 'https://your-api.com',    // Your production API
+// Get API URL from environment or default to local
+const getApiBaseUrl = (): string => {
+  // Check for explicit API URL in environment
+  if (typeof process !== 'undefined' && process.env.API_BASE_URL) {
+    return process.env.API_BASE_URL;
+  }
+  
+  // Check for React Native config
+  if (typeof process !== 'undefined' && process.env.REACT_NATIVE_API_URL) {
+    return process.env.REACT_NATIVE_API_URL;
+  }
+  
+  // Default to Render for production, localhost for development
+  return __DEV__ 
+    ? 'http://localhost:8000' 
+    : process.env.RENDER_API_URL || 'https://motto-backend.onrender.com';
 };
 
-// Get current environment
-const ENV = __DEV__ ? 'development' : 'production';
-
-// Export API config
 export const API_CONFIG = {
-  baseURL: API_URLS[ENV],
+  baseURL: getApiBaseUrl(),
   timeout: 30000, // 30 seconds
-  retries: 3,
-  
-  endpoints: {
-    // AI Chat
-    chat: '/api/chat',
-    chatStream: '/api/chat/stream',
-    
-    // User Management
-    users: '/api/users',
-    userProfile: '/api/users/profile',
-    
-    // Learning
-    learning: '/api/learning',
-    
-    // Multilingual
-    translate: '/api/translate',
-    detectLanguage: '/api/detect-language',
-    
-    // Context
-    context: '/api/context',
-    
-    // Health
-    health: '/api/health',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 };
 
-/**
- * API Client with error handling
- */
-export class APIClient {
-  private static baseURL = API_CONFIG.baseURL;
-  private static timeout = API_CONFIG.timeout;
+// API Endpoints
+export const API_ENDPOINTS = {
+  // Health
+  health: '/health',
+  healthLive: '/health/live',
+  healthReady: '/health/ready',
+  
+  // Chat
+  chat: '/api/chat',
+  chatHistory: '/api/chat/history',
+  
+  // User
+  userProfile: '/api/user/profile',
+  userLearning: '/api/user/learning',
+  
+  // Analytics
+  analytics: '/api/analytics',
+  
+  // Authentication (if needed)
+  auth: {
+    login: '/api/auth/login',
+    register: '/api/auth/register',
+    logout: '/api/auth/logout',
+    refresh: '/api/auth/refresh',
+  },
+};
 
-  /**
-   * Make API request with error handling
-   */
-  static async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+// Helper function to build full URL
+export const buildApiUrl = (endpoint: string): string => {
+  const baseUrl = API_CONFIG.baseURL.replace(/\/$/, ''); // Remove trailing slash
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${path}`;
+};
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
-      }
-      
-      throw error;
-    }
-  }
-
-  /**
-   * POST request
-   */
-  static async post<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * GET request
-   */
-  static async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'GET',
-    });
-  }
-
-  /**
-   * PUT request
-   */
-  static async put<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * DELETE request
-   */
-  static async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'DELETE',
-    });
-  }
-
-  /**
-   * Check API health
-   */
-  static async checkHealth(): Promise<boolean> {
-    try {
-      const response = await this.get<{ status: string }>(API_CONFIG.endpoints.health);
-      return response.status === 'healthy';
-    } catch (error) {
-      console.error('API health check failed:', error);
-      return false;
-    }
-  }
-}
-
-export default APIClient;
+// Export for use in services
+export default API_CONFIG;

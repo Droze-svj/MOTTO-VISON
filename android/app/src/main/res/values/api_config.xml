@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API Base URL for Render deployment -->
+    <string name="api_base_url">https://motto-backend.onrender.com</string>
+    
+    <!-- Development URL (can be overridden) -->
+    <string name="api_base_url_dev">http://10.0.2.2:8000</string>
+</resources>
+

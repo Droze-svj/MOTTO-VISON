@@ -1,0 +1,85 @@
+name: Build and Distribute iOS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+          cd ..
+      
+      - name: Bundle React Native
+        run: |
+          npx react-native bundle \
+            --platform ios \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output ios/main.jsbundle \
+            --assets-dest ios/
+      
+      - name: Build iOS Archive
+        run: |
+          cd ios
+          xcodebuild archive \
+            -workspace MOTTOVISON.xcworkspace \
+            -scheme MOTTOVISON \
+            -configuration Release \
+            -archivePath build/MOTTOVISON.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      
+      - name: Export IPA
+        run: |
+          cd ios
+          xcodebuild -exportArchive \
+            -archivePath build/MOTTOVISON.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates
+      
+      - name: Upload IPA as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: MOTTOVISON-IPA
+          path: ios/build/export/*.ipa
+          retention-days: 30
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Distribute to Firebase
+        if: success()
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase app-distribution:distribute \
+            ios/build/export/MOTTOVISON.ipa \
+            --app-type ios \
+            --groups "beta-testers" \
+            --release-notes "Automated build from GitHub Actions - $(git log -1 --pretty=%B)" \
+            --token "$FIREBASE_TOKEN"
+

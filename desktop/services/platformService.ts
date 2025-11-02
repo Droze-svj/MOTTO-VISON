@@ -1,8 +1,21 @@
-const { ipcRenderer } = require('electron');
-const os = require('os');
-const path = require('path');
+import { ipcRenderer } from 'electron';
+import * as os from 'os';
+import * as path from 'path';
+
+interface SystemInfo {
+  platform: string;
+  arch: string;
+  version: string;
+  memory: number;
+  cpus: number;
+}
 
 class PlatformService {
+  private platform: NodeJS.Platform;
+  public readonly isMac: boolean;
+  public readonly isWindows: boolean;
+  public readonly isLinux: boolean;
+
   constructor() {
     this.platform = process.platform;
     this.isMac = this.platform === 'darwin';
@@ -11,7 +24,7 @@ class PlatformService {
   }
 
   // System information
-  getSystemInfo() {
+  getSystemInfo(): SystemInfo {
     return {
       platform: this.platform,
       arch: os.arch(),
@@ -22,40 +35,42 @@ class PlatformService {
   }
 
   // File system paths
-  getAppDataPath() {
+  getAppDataPath(): string {
+    const homeDir = process.env.HOME || process.env.USERPROFILE || os.homedir() || './app_data';
+    
     switch (this.platform) {
       case 'win32':
         return process.env.APPDATA || process.env.USERPROFILE || process.env.HOME || os.homedir() || './app_data';
       case 'darwin':
-        return (process.env.HOME || os.homedir() || './app_data') + '/Library/Application Support';
+        return `${homeDir}/Library/Application Support`;
       case 'linux':
-        return (process.env.HOME || os.homedir() || './app_data') + '/.config';
+        return `${homeDir}/.config`;
       default:
-        return process.env.HOME || os.homedir() || './app_data';
+        return homeDir;
     }
   }
 
   // Platform-specific features
-  async getSystemTheme() {
+  async getSystemTheme(): Promise<'light' | 'dark'> {
     return await ipcRenderer.invoke('get-system-theme');
   }
 
-  async showNotification(title, message) {
+  async showNotification(title: string, message: string): Promise<void> {
     return await ipcRenderer.invoke('show-notification', { title, message });
   }
 
   // File handling
-  getFileExtension(filePath) {
+  getFileExtension(filePath: string): string {
     return path.extname(filePath).toLowerCase();
   }
 
-  isImageFile(filePath) {
+  isImageFile(filePath: string): boolean {
     const ext = this.getFileExtension(filePath);
     return ['.jpg', '.jpeg', '.png', '.gif', '.bmp'].includes(ext);
   }
 
   // Platform-specific shortcuts
-  getShortcutKey(key) {
+  getShortcutKey(key: string): string {
     if (this.isMac) {
       return key.replace('Ctrl', '⌘').replace('Alt', '⌥');
     }
@@ -63,21 +78,15 @@ class PlatformService {
   }
 
   // System integration
-  async registerProtocolHandler(protocol) {
-    if (this.isMac) {
-      // macOS protocol handler registration
-      return await ipcRenderer.invoke('register-protocol-handler', protocol);
-    } else if (this.isWindows) {
-      // Windows protocol handler registration
-      return await ipcRenderer.invoke('register-protocol-handler', protocol);
-    } else if (this.isLinux) {
-      // Linux protocol handler registration
+  async registerProtocolHandler(protocol: string): Promise<void> {
+    if (this.isMac || this.isWindows || this.isLinux) {
+      // Platform-agnostic protocol handler registration
       return await ipcRenderer.invoke('register-protocol-handler', protocol);
     }
   }
 
   // System tray integration
-  async setupSystemTray(icon, menu) {
+  async setupSystemTray(icon: string, menu: any): Promise<void> {
     if (this.isMac) {
       // macOS dock integration
       return await ipcRenderer.invoke('setup-dock', { icon, menu });
@@ -88,35 +97,36 @@ class PlatformService {
   }
 
   // Power management
-  async preventSystemSleep() {
+  async preventSystemSleep(): Promise<void> {
     return await ipcRenderer.invoke('prevent-sleep');
   }
 
-  async allowSystemSleep() {
+  async allowSystemSleep(): Promise<void> {
     return await ipcRenderer.invoke('allow-sleep');
   }
 
   // Clipboard handling
-  async readClipboard() {
+  async readClipboard(): Promise<string> {
     return await ipcRenderer.invoke('read-clipboard');
   }
 
-  async writeClipboard(text) {
+  async writeClipboard(text: string): Promise<void> {
     return await ipcRenderer.invoke('write-clipboard', text);
   }
 
   // Window management
-  async minimizeWindow() {
+  async minimizeWindow(): Promise<void> {
     return await ipcRenderer.invoke('minimize-window');
   }
 
-  async maximizeWindow() {
+  async maximizeWindow(): Promise<void> {
     return await ipcRenderer.invoke('maximize-window');
   }
 
-  async closeWindow() {
+  async closeWindow(): Promise<void> {
     return await ipcRenderer.invoke('close-window');
   }
 }
 
-module.exports = new PlatformService(); 
+export default new PlatformService();
+

@@ -16,6 +16,10 @@ target 'MOTTOVISON' do
     :fabric_enabled => false
   )
 
+  # Firebase App Distribution - Using CLI-only method (no SDK needed)
+  # Removed Firebase pods to avoid iCloud sync issues
+  # Upload via: ./scripts/upload-to-firebase.sh
+
   post_install do |installer|
     react_native_post_install(
       installer,

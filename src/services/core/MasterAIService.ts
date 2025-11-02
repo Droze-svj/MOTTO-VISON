@@ -56,8 +56,48 @@ export class MasterAIService {
   }
 
   /**
-   * ULTIMATE AI RESPONSE
-   * Uses all 85+ sources and 100+ personalization dimensions
+   * Master AI chat processing - orchestrates all AI services for comprehensive response
+   * 
+   * Processing pipeline (7 phases):
+   * 1. Language Detection: Detects user's language (100+ languages)
+   * 2. Context Resolution: Resolves ambiguous input using conversation history
+   * 3. Knowledge Collection: Searches 85+ free knowledge sources
+   * 4. Response Generation: Creates base response from collected knowledge
+   * 5. Deep Personalization: Applies 100+ personalization dimensions
+   * 6. Response Variety: Adds natural conversation patterns
+   * 7. Translation & Learning: Translates if needed, records interaction
+   * 
+   * Features:
+   * - Special Drézy recognition handling
+   * - Multi-language support with auto-detection
+   * - Context-aware responses using conversation history
+   * - 85+ knowledge sources for comprehensive answers
+   * - 100+ personalization dimensions (cognitive, personality, motivation, etc.)
+   * - Response variety to avoid robotic patterns
+   * - Proactive suggestion generation
+   * 
+   * @param userId - Unique user identifier for personalization
+   * @param userInput - The user's message/question
+   * @param context - Optional context object (conversation history, metadata)
+   * 
+   * @returns Promise resolving to MasterResponse with:
+   *   - text: Final response text
+   *   - sources: Array of knowledge sources used
+   *   - personalizationApplied: List of personalization techniques used
+   *   - confidence: Confidence score (0-100)
+   *   - adaptations: Breakdown of adaptations applied
+   *   - learnedFrom: Whether interaction was used for learning
+   *   - responseTime: Processing time in milliseconds
+   *   - suggestions: Array of follow-up suggestions (optional)
+   * 
+   * @throws Will return error response if processing fails (does not throw)
+   * 
+   * @example
+   * ```typescript
+   * const response = await masterAI.masterChat('user123', 'How does React work?');
+   * console.log(response.text); // Personalized response
+   * console.log(response.sources); // ['Wikipedia', 'MDN', ...]
+   * ```
    */
   async masterChat(
     userId: string,
